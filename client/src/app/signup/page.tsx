@@ -4,13 +4,22 @@ import { useState } from "react";
 import { useMutation } from "@apollo/client/react";
 import { REGISTER_MUTATION } from "../../graphql/mutations/auth";
 
+interface RegisterResponse {
+  register: {
+    id: string;
+    email: string;
+    username: string;
+  }
+}
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
-export default function SignupPage() {
+export default function SignUp() {
+  const [registerUser, { loading, error }] = useMutation<RegisterResponse>(REGISTER_MUTATION);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -18,7 +27,7 @@ export default function SignupPage() {
     confirm: "",
   });
 
-  const [registerUser, { loading, error }] = useMutation(REGISTER_MUTATION);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.id]: e.target.value });
