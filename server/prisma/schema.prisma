@@ -10,13 +10,15 @@ datasource db {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
-  username     String
-  passwordHash String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  sessions     Session[]
+  id              Int              @id @default(autoincrement())
+  email           String           @unique
+  username        String
+  passwordHash    String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  sessions        Session[]
+  resumes         Resume[]
+  jobDescriptions JobDescription[]
 }
 
 model Session {
@@ -29,3 +31,30 @@ model Session {
 
   user User @relation(fields: [userId], references: [id])
 }
+
+model Resume {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  latexCode String? // pasted LaTeX
+  fileUrl   String? // Cloudinary URL
+  fileType  String? // 'latex' | 'tsx' | 'pdf' | ...
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model JobDescription {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  title      String
+  content    String?   // pasted JD text
+  fileUrl    String?   // not used now
+  fileType   String?   // not used now
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
