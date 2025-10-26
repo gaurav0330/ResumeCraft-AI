@@ -1,6 +1,7 @@
 type User {
   id: ID!
   email: String!
+  username: String!
 }
 
 type AuthResult {
@@ -13,7 +14,7 @@ type Query {
 }
 
 type Mutation {
-  register(email: String!, password: String!): User!
+  register(username: String!,email: String!, password: String!): User!
   login(email: String!, password: String!): AuthResult!
   refreshToken(refreshToken: String!): AuthResult!
   logout: Boolean!
