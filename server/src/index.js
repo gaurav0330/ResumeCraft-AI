@@ -6,3 +6,4 @@ const PORT = config.port || 4000;
 httpServer.listen(PORT, () => {
   logger.info(`🚀 Server running at http://localhost:${PORT}/graphql`);
 });
+  
