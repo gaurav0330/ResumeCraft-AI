@@ -1,9 +1,10 @@
 // src/app.js
 import express from "express";
 import { ApolloServer } from "@apollo/server";
-import { startStandaloneServer } from "@apollo/server/standalone";
+import { expressMiddleware } from "@as-integrations/express4";
+import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import http from "http";
 
-import bodyParser from "body-parser";
 import cors from "cors";
 import helmet from "helmet";
 import { readFileSync } from "fs";
@@ -24,28 +25,40 @@ const typeDefs = readFileSync(
   "utf8",
 );
 
+// Initialize Express app
+const app = express();
+const httpServer = http.createServer(app);
+
 // Create Apollo server
 const server = new ApolloServer({
   typeDefs,
   resolvers: authResolver,
+  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 
-// Start Apollo Server and attach it to Express
-const { url } = await startStandaloneServer(server, {
-  context,
-  listen: { port: 4000 },
-});
-
-logger.info(`✅ Apollo Server ready at ${url}`);
-
-// Initialize Express app
-const app = express();
+// Start Apollo Server
+await server.start();
 
 // 🛡 Security & Middleware
 app.use(helmet());
-app.use(cors({ origin: "*", credentials: true }));
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
+
 app.use(rateLimiter);
 app.use(requestLogger);
+
+// Apply Apollo GraphQL middleware
+app.use(
+  "/graphql",
+  express.json(),
+  expressMiddleware(server, {
+    context,
+  })
+);
 
 // Health endpoint
 app.get("/healthz", (req, res) => res.json({ status: "ok" }));
@@ -53,6 +66,6 @@ app.get("/healthz", (req, res) => res.json({ status: "ok" }));
 // Global error handler
 app.use(errorHandler);
 
-logger.info("✅ Apollo Server v4 + Express 5 configured");
+logger.info("✅ Apollo Server v5 + Express 5 configured");
 
-export default app;
+export { app, httpServer };
