@@ -5,9 +5,9 @@ import { generateAccessToken } from "./tokens.js";
 
 const REFRESH_EXPIRY_DAYS = Number(process.env.REFRESH_EXPIRY_DAYS || 7);
 
-export async function registerUser(email, password) {
+export async function registerUser(username, email, password) {
   const passwordHash = await hashPassword(password);
-  return prisma.user.create({ data: { email, passwordHash } });
+  return prisma.user.create({ data: { username, email, passwordHash } });
 }
 
 export async function loginUser(email, password) {
