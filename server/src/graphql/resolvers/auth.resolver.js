@@ -15,7 +15,7 @@ export default {
     },
   },
   Mutation: {
-    register: async (_, { email, password }) => registerUser(email, password),
+    register: async (_, { username, email, password }) => registerUser(username, email, password),
 
     login: async (_, { email, password }) => {
       const { accessToken, refreshToken, user } = await loginUser(
