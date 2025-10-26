@@ -1,71 +1,71 @@
 // src/app.js
 import express from "express";
+import http from "http";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
-import http from "http";
-
 import cors from "cors";
 import helmet from "helmet";
-import { readFileSync } from "fs";
 import path from "path";
+import { readFileSync } from "fs";
 
 import context from "./graphql/context.js";
-import authResolver from "./graphql/resolvers/auth.resolver.js";
+import resolvers from "./graphql/resolvers/index.js";   // ✅ merge all resolvers
+import typeDefsArray from "./graphql/schema/index.js";   // ✅ merge all schemas
+
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { requestLogger } from "./middlewares/requestLogger.js";
 import { rateLimiter } from "./middlewares/rateLimiter.js";
 import { logger } from "./config/logger.js";
+import { graphqlUploadExpress } from "graphql-upload-minimal";
+
+
+
 
 const __dirname = path.resolve();
 
-// Load schema
-const typeDefs = readFileSync(
-  path.join(__dirname, "src/graphql/schema/auth.graphql"),
-  "utf8",
-);
-
-// Initialize Express app
+// 🏗️ Initialize Express app and HTTP server
 const app = express();
 const httpServer = http.createServer(app);
 
-// Create Apollo server
+// 🧠 Create Apollo Server instance
 const server = new ApolloServer({
-  typeDefs,
-  resolvers: authResolver,
+  typeDefs: typeDefsArray,   // ✅ array of .graphql files (auth, resume, jobDescription)
+  resolvers,                 // ✅ combined resolvers
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 
-// Start Apollo Server
+// 🚀 Start Apollo Server
 await server.start();
 
-// 🛡 Security & Middleware
+// 🛡 Security Middlewares
 app.use(helmet());
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
     credentials: true,
-  })
+  }),
 );
-
 app.use(rateLimiter);
 app.use(requestLogger);
+app.use(express.json());
+app.use(graphqlUploadExpress({ maxFileSize: 5_000_000, maxFiles: 2 })); // ✅ Added
 
-// Apply Apollo GraphQL middleware
+// 🔌 Mount Apollo GraphQL middleware
 app.use(
   "/graphql",
-  express.json(),
   expressMiddleware(server, {
     context,
-  })
+  }),
 );
 
-// Health endpoint
+
+// ❤️ Health check endpoint
 app.get("/healthz", (req, res) => res.json({ status: "ok" }));
 
-// Global error handler
+// ❗ Global error handler
 app.use(errorHandler);
 
-logger.info("✅ Apollo Server v5 + Express 5 configured");
+logger.info("✅ Apollo Server v5 + Express 5 configured and running");
 
 export { app, httpServer };

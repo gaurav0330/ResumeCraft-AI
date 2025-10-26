@@ -1,0 +1,25 @@
+type Resume {
+  id: ID!
+  title: String!
+  latexCode: String
+  fileUrl: String
+  fileType: String
+  createdAt: String
+  updatedAt: String
+}
+
+type Query {
+  getUserResumes(userId: ID!): [Resume!]!
+}
+
+scalar Upload
+
+
+type Mutation {
+  uploadResume(
+    title: String!
+    latexCode: String
+    file: Upload
+    fileType: String
+  ): Resume!
+}
