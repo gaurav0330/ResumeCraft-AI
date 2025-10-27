@@ -37,18 +37,26 @@ export function AuthProviderWrapper({ children }: { children: React.ReactNode })
     router.push("/login");
   };
 
-useEffect(() => {
-  const storedUser = localStorage.getItem("user");
-  const token = localStorage.getItem("authToken");
+  // ✅ Recheck token whenever localStorage changes (or on mount)
+  useEffect(() => {
+    const checkAuth = () => {
+      const storedUser = localStorage.getItem("user");
+      const token = localStorage.getItem("authToken");
 
-  if (token && storedUser && !isTokenExpired(token)) {
-    setUser(JSON.parse(storedUser));
-  }
+      if (token && storedUser && !isTokenExpired(token)) {
+        setUser(JSON.parse(storedUser));
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    };
 
-  setIsLoading(false);
-}, []);
+    checkAuth(); // run once
+    window.addEventListener("storage", checkAuth);
+    return () => window.removeEventListener("storage", checkAuth);
+  }, []);
 
-
+  // Auto logout when token expires
   useEffect(() => {
     const interval = setInterval(() => {
       const token = localStorage.getItem("authToken");

@@ -8,6 +8,7 @@ import { ResumeUploadBox } from "@/components/resume-tailor/ResumeUploadBox";
 import { TailorResult } from "@/components/resume-tailor/TailorResult";
 import { UPLOAD_RESUME_MUTATION } from "@/graphql/mutations/resume";
 import { CREATE_JOB_DESCRIPTION_MUTATION } from "@/graphql/mutations/jobDescription";
+import ProtectedRoute from "@/components/provider/ProtectedRoute";
 
 function ResumeTailorContent() {
   const [jobDescription, setJobDescription] = useState({
@@ -146,5 +147,9 @@ function ResumeTailorContent() {
 }
 
 export default function ResumeTailorPage() {
-  return <ResumeTailorContent />;
+  return (
+     <ProtectedRoute>
+      <ResumeTailorContent />
+    </ProtectedRoute>
+  );
 }
