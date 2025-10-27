@@ -8,9 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 interface JobDescriptionBoxProps {
   value: {
     title: string;
-    description: string;
+    content: string;
   };
-  onChange: (val: { title: string; description: string }) => void;
+  onChange: (val: { title: string; content: string }) => void;
 }
 
 export function JobDescriptionBox({ value, onChange }: JobDescriptionBoxProps) {
@@ -40,9 +40,9 @@ export function JobDescriptionBox({ value, onChange }: JobDescriptionBoxProps) {
           <Textarea
             id="jobDescription"
             placeholder="Paste the full job description here..."
-            value={value.description}
+            value={value.content}
             onChange={(e) =>
-              onChange({ ...value, description: e.target.value })
+              onChange({ ...value, content: e.target.value })
             }
             className="min-h-[150px] mt-1"
           />

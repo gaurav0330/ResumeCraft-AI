@@ -1,3 +1,4 @@
+// server/src/graphql/resolvers/jobDescription.resolver.js
 import { AuthenticationError } from "apollo-server-errors";
 
 export default {
@@ -9,16 +10,34 @@ export default {
   },
 
   Mutation: {
-    createJobDescription: async (_, { title, content }, { prisma, user }) => {
-      if (!user) throw new AuthenticationError("Unauthorized");
+    createJobDescription: async (_, { title, content }, context) => {
+      console.log('Context:', context); // Debug log
+      const { prisma, user } = context;
 
-      return prisma.jobDescription.create({
-        data: {
-          userId: user.id,
-          title,
-          content,
-        },
-      });
+      if (!prisma) {
+        console.error('Prisma client is undefined');
+        throw new Error('Database connection error');
+      }
+
+      if (!user) {
+        console.error('User is not authenticated');
+        throw new AuthenticationError("Unauthorized");
+      }
+
+      try {
+        const result = await prisma.jobDescription.create({
+          data: {
+            userId: user.id,
+            title,
+            content,
+          },
+        });
+        console.log('Created job description:', result); // Debug log
+        return result;
+      } catch (error) {
+        console.error('Error creating job description:', error);
+        throw error;
+      }
     },
   },
 };
