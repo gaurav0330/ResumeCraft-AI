@@ -43,7 +43,7 @@ export function ResumeUploadBox({ onFileSelect, onLatexChange }: ResumeUploadBox
               </p>
               <input
                 type="file"
-                accept=".tex"
+                accept=".pdf,.tex"
                 className="hidden"
                 ref={fileInputRef}
                 onChange={handleFileChange}

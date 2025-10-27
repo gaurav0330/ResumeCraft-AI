@@ -9,7 +9,7 @@ import helmet from "helmet";
 import path from "path";
 import { readFileSync } from "fs";
 
-import context from "./graphql/context.js";
+import { createContext } from './graphql/context.js';
 import resolvers from "./graphql/resolvers/index.js";   // ✅ merge all resolvers
 import typeDefsArray from "./graphql/schema/index.js";   // ✅ merge all schemas
 
@@ -32,6 +32,7 @@ const httpServer = http.createServer(app);
 const server = new ApolloServer({
   typeDefs: typeDefsArray,   // ✅ array of .graphql files (auth, resume, jobDescription)
   resolvers,                 // ✅ combined resolvers
+  context: createContext,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 
@@ -55,7 +56,7 @@ app.use(graphqlUploadExpress({ maxFileSize: 5_000_000, maxFiles: 2 })); // ✅ A
 app.use(
   "/graphql",
   expressMiddleware(server, {
-    context,
+    context: createContext,
   }),
 );
 

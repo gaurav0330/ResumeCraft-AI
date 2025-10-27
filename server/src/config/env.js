@@ -22,6 +22,6 @@ export const config = {
   dbUrl: process.env.DATABASE_URL,
   accessSecret: process.env.ACCESS_TOKEN_SECRET,
   refreshSecret: process.env.REFRESH_TOKEN_SECRET,
-  tokenExpiry: process.env.TOKEN_EXPIRY || "15m",
+  tokenExpiry: process.env.TOKEN_EXPIRY || "15000m",
   refreshExpiryDays: Number(process.env.REFRESH_EXPIRY_DAYS || 7),
 };
