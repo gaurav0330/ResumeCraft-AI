@@ -76,6 +76,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     localStorage.setItem("user", JSON.stringify(data.login.user));
   }
 
+   window.dispatchEvent(new Event("storage"));
       // 🕐 Small delay for cookie sync
    router.push("/resume-tailor");
     }
