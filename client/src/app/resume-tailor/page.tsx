@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { JobDescriptionBox } from "@/components/resume-tailor/JobDescriptionBox";
 import { ResumeUploadBox } from "@/components/resume-tailor/ResumeUploadBox";
 import { TailorResult } from "@/components/resume-tailor/TailorResult";
+import { LaTeXPreview } from "@/components/resume-tailor/LaTeXPreview";
 import { Textarea } from "@/components/ui/textarea";
 import ProtectedRoute from "@/components/provider/ProtectedRoute";
 import { useAuth } from "@/components/provider/AuthProviderWrapper";
@@ -150,22 +151,39 @@ function ResumeTailorContent() {
               </div>
 
               <div className="bg-gray-100 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-700">Resume</h3>
+                <h3 className="font-semibold text-gray-700 mb-3">Resume</h3>
                 {resumeData?.getUserResumes?.[0]?.fileUrl ? (
-                  <a
-                    href={resumeData.getUserResumes[0].fileUrl!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline"
-                  >
-                    View Uploaded Resume
-                  </a>
+                  <div className="space-y-3">
+                    <a
+                      href={resumeData.getUserResumes[0].fileUrl!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      View Uploaded Resume
+                    </a>
+                    {latexCode && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium text-gray-600 mb-2">LaTeX Preview:</h4>
+                        <LaTeXPreview 
+                          latexCode={latexCode} 
+                          title=""
+                          className="border-0 shadow-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : latexCode ? (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-600 mb-2">LaTeX Preview:</h4>
+                    <LaTeXPreview 
+                      latexCode={latexCode} 
+                      title=""
+                      className="border-0 shadow-none"
+                    />
+                  </div>
                 ) : (
-                  <Textarea
-                    value={latexCode}
-                    readOnly
-                    className="min-h-[200px]"
-                  />
+                  <p className="text-gray-500 text-sm">No resume data available</p>
                 )}
               </div>
 
@@ -192,7 +210,7 @@ function ResumeTailorContent() {
           )}
         </div>
 
-        {isResultVisible && <TailorResult tailoredResume={tailoredResume} />}
+        {isResultVisible && <TailorResult tailoredResume={tailoredResume} latexCode={latexCode} />}
       </div>
     </div>
   );
