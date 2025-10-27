@@ -8,6 +8,13 @@ export const GET_USER_RESUMES_QUERY = gql`
       latexCode
       fileUrl
       fileType
+      sections {
+        id
+        sectionName
+        content
+        createdAt
+        updatedAt
+      }
       createdAt
       updatedAt
     }

@@ -1,9 +1,18 @@
+type ResumeSection {
+  id: ID!
+  sectionName: String!
+  content: String!
+  createdAt: String
+  updatedAt: String
+}
+
 type Resume {
   id: ID!
   title: String!
   latexCode: String
   fileUrl: String
   fileType: String
+  sections: [ResumeSection!]!
   createdAt: String
   updatedAt: String
 }
