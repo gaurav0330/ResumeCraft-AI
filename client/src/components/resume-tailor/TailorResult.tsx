@@ -5,15 +5,15 @@ import { FileText } from "lucide-react";
 import { LaTeXPreview } from "./LaTeXPreview";
 
 interface TailorResultProps {
-  tailoredResume: string;
+  tailoredResume?: string;
   latexCode?: string;
 }
 
 export function TailorResult({ tailoredResume, latexCode }: TailorResultProps) {
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle>Resume Preview</CardTitle>
+    <Card className="h-full bg-white shadow-lg border border-gray-200">
+      <CardHeader className="pb-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <CardTitle className="text-xl font-bold text-gray-800">Resume Preview</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         {latexCode ? (
