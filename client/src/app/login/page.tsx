@@ -52,32 +52,38 @@ export default function LoginPage() {
     setFormErrors((prev) => ({ ...prev, [id]: "" }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!validateForm()) return;
 
-    try {
-      const { data } = await login({ 
-        variables: form,
-        onError: (error) => {
-          console.error("Login error:", error);
-        }
-      });
+  try {
+    const { data } = await login({ 
+      variables: form,
+      onError: (error) => console.error("Login error:", error),
+    });
 
-      if (data?.login) {
-        dispatch(setCredentials(data.login));
+    console.log("✅ Login mutation data:", data);
 
-        if (data.login.token) {
-          localStorage.setItem("authToken", data.login.token);
-        }
+    if (data?.login) {
+      dispatch(setCredentials(data.login));
 
-        router.push("/resume-tailor");
-      }
-    } catch (err) {
-      console.error("Login failed:", err);
+     if (data.login.accessToken) {
+    localStorage.setItem("authToken", data.login.accessToken);
+    document.cookie = `authToken=${data.login.accessToken}; path=/; max-age=3600;`;
+  }
+   
+  if (data.login.user) {
+    localStorage.setItem("user", JSON.stringify(data.login.user));
+  }
+
+      // 🕐 Small delay for cookie sync
+   router.push("/resume-tailor");
     }
-  };
+  } catch (err) {
+    console.error("Login failed:", err);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
