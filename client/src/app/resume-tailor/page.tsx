@@ -118,72 +118,44 @@ function ResumeTailorContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <h1 className="text-3xl font-semibold text-center pt-10 mb-8">
-        Resume Tailor AI
-      </h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="bg-white shadow-sm border-b">
+        <h1 className="text-4xl font-bold text-center py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
+          Resume Tailor AI
+        </h1>
+      </div>
 
-      <div
-        className={`transition-all duration-500 ease-in-out ${
-          isResultVisible
-            ? "grid lg:grid-cols-2 gap-8 px-10 pb-10"
-            : "flex items-center justify-center"
-        }`}
-      >
-        <div
-          className={`space-y-6 w-full ${
-            isResultVisible ? "" : "max-w-xl p-6 bg-white rounded-2xl shadow-md"
-          }`}
-        >
+      <div className="grid lg:grid-cols-2 gap-8 px-4 lg:px-12 py-8 max-w-8xl mx-auto">
+        {/* Left Column - Forms */}
+        <div className="space-y-6">
           {hasExistingData ? (
             // ✅ Show existing DB data (read-only)
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Your Saved Details</h2>
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold mb-4">Your Saved Details</h2>
 
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-700">Job Description</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  <strong>Title:</strong> {jobDescription.title}
-                </p>
-                <p className="text-sm text-gray-600 whitespace-pre-wrap mt-1">
-                  {jobDescription.content}
-                </p>
-              </div>
+                <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                  <h3 className="font-semibold text-gray-700 mb-2">Job Description</h3>
+                  <p className="text-sm text-gray-600 mb-1">
+                    <strong>Title:</strong> {jobDescription.title}
+                  </p>
+                  <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                    {jobDescription.content}
+                  </p>
+                </div>
 
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-700 mb-3">Resume</h3>
-                {resumeData?.getUserResumes?.[0]?.fileUrl ? (
-                  <div className="space-y-3">
+                {resumeData?.getUserResumes?.[0]?.fileUrl && (
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                    <h3 className="font-semibold text-gray-700 mb-2">Uploaded File</h3>
                     <a
                       href={resumeData.getUserResumes[0].fileUrl!}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 underline"
+                      className="text-blue-600 hover:underline text-sm"
                     >
                       View Uploaded Resume
                     </a>
-                    {latexCode && (
-                      <div className="mt-4">
-                        <h4 className="text-sm font-medium text-gray-600 mb-2">LaTeX Preview:</h4>
-                        <LaTeXPreview 
-                          latexCode={latexCode} 
-                          title=""
-                          className="border-0 shadow-none"
-                        />
-                      </div>
-                    )}
                   </div>
-                ) : latexCode ? (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-600 mb-2">LaTeX Preview:</h4>
-                    <LaTeXPreview 
-                      latexCode={latexCode} 
-                      title=""
-                      className="border-0 shadow-none"
-                    />
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-sm">No resume data available</p>
                 )}
               </div>
 
@@ -202,15 +174,34 @@ function ResumeTailorContent() {
               <Button
                 onClick={handleTailorResume}
                 disabled={isLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-6 text-lg font-semibold shadow-lg"
               >
-                {isLoading ? "Processing..." : "✂️ Tailor Resume"}
+                {isLoading ? "⏳ Processing..." : "✂️ Tailor Resume"}
               </Button>
             </>
           )}
         </div>
 
-        {isResultVisible && <TailorResult tailoredResume={tailoredResume} latexCode={latexCode} />}
+        {/* Right Column - Preview */}
+        <div className="lg:sticky lg:top-6 lg:self-start">
+          {latexCode ? (
+            <TailorResult tailoredResume={tailoredResume} latexCode={latexCode} />
+          ) : (
+            <div className="bg-white rounded-xl shadow-md border border-gray-200 p-12 min-h-[500px] flex items-center justify-center">
+              <div className="text-center">
+                <div className="mb-6">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+                    <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">Add Your Resume</h3>
+                <p className="text-gray-500">Upload a .tex file or paste LaTeX code to see the preview</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
