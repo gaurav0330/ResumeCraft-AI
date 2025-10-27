@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Upload, FileText, Eye, Code } from "lucide-react";
+import { LaTeXPreview } from "./LaTeXPreview";
 
 interface ResumeUploadBoxProps {
   onFileSelect: (file: File | null) => void;
@@ -15,6 +17,7 @@ interface ResumeUploadBoxProps {
 export function ResumeUploadBox({ onFileSelect, onLatexChange, latexValue }: ResumeUploadBoxProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [activeTab, setActiveTab] = useState("upload");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -32,16 +35,27 @@ export function ResumeUploadBox({ onFileSelect, onLatexChange, latexValue }: Res
     }
   };
 
+  const handleLatexChange = (value: string) => {
+    onLatexChange(value);
+    // Switch to preview tab if LaTeX code is added
+    if (value.trim() && activeTab === "paste") {
+      setActiveTab("preview");
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>2. Provide Your Resume</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="upload">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="upload">Upload .tex or .pdf</TabsTrigger>
             <TabsTrigger value="paste">Paste LaTeX Code</TabsTrigger>
+            <TabsTrigger value="preview" disabled={!latexValue?.trim()}>
+              Preview
+            </TabsTrigger>
           </TabsList>
 
           {/* Upload Tab */}
@@ -87,12 +101,37 @@ export function ResumeUploadBox({ onFileSelect, onLatexChange, latexValue }: Res
 
           {/* Paste Tab */}
           <TabsContent value="paste">
-            <Textarea
-              placeholder="Paste your LaTeX resume code here..."
-              value={latexValue || ""}
-              onChange={(e) => onLatexChange(e.target.value)}
-              className="min-h-[200px]"
-            />
+            <div className="space-y-4">
+              <Textarea
+                placeholder="Paste your LaTeX resume code here..."
+                value={latexValue || ""}
+                onChange={(e) => handleLatexChange(e.target.value)}
+                className="min-h-[200px] font-mono text-sm"
+              />
+              {latexValue?.trim() && (
+                <div className="flex items-center gap-2 text-sm text-blue-600">
+                  <Eye className="h-4 w-4" />
+                  <span>Switch to Preview tab to see rendered output</span>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Preview Tab */}
+          <TabsContent value="preview">
+            {latexValue?.trim() ? (
+              <LaTeXPreview 
+                latexCode={latexValue} 
+                title="Resume Preview"
+                className="border-0 shadow-none"
+              />
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <Code className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>No LaTeX code to preview</p>
+                <p className="text-sm">Add some LaTeX code in the "Paste LaTeX Code" tab</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </CardContent>
