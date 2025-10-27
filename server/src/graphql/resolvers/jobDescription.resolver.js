@@ -2,10 +2,23 @@ import { AuthenticationError } from "apollo-server-errors";
 
 export default {
   Query: {
-    getUserJobDescriptions: async (_, __, { prisma, user }) => {
+    getUserJobDescriptions: async (_, { userId }, { prisma, user }) => {
+      // Still enforce auth
       if (!user) throw new AuthenticationError("Unauthorized");
-      return prisma.jobDescription.findMany({ where: { userId: user.id } });
+    
+      // Use provided userId if present, otherwise fallback to the logged-in user's ID
+      const idToUse = userId ? parseInt(userId) : user.id;
+    
+      // (Optional: prevent querying other users' data)
+      if (userId && parseInt(userId) !== user.id) {
+        throw new AuthenticationError("Cannot access another user's data");
+      }
+    
+      return prisma.jobDescription.findMany({
+        where: { userId: idToUse },
+      });
     },
+    
   },
 
   Mutation: {
