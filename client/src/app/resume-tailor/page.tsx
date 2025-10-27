@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation } from "@apollo/client/react";
 import { Button } from "@/components/ui/button";
 import { JobDescriptionBox } from "@/components/resume-tailor/JobDescriptionBox";
 import { ResumeUploadBox } from "@/components/resume-tailor/ResumeUploadBox";
 import { TailorResult } from "@/components/resume-tailor/TailorResult";
+import { UPLOAD_RESUME_MUTATION } from "@/graphql/mutations/resume";
+import { CREATE_JOB_DESCRIPTION_MUTATION } from "@/graphql/mutations/jobDescription";
 
-export default function ResumeTailorPage() {
+function ResumeTailorContent() {
   const [jobDescription, setJobDescription] = useState({
     title: "",
-    description: "",
+    content: "",
   });
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [latexCode, setLatexCode] = useState("");
@@ -17,30 +20,86 @@ export default function ResumeTailorPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isResultVisible, setIsResultVisible] = useState(false);
 
-  const handleTailorResume = () => {
-    // Validation
-    if (!jobDescription.title || !jobDescription.description) {
-      alert("Please fill out the job title and job description.");
+  const [createJobDescription] = useMutation(CREATE_JOB_DESCRIPTION_MUTATION);
+  const [uploadResume] = useMutation(UPLOAD_RESUME_MUTATION);
+
+  const handleTailorResume = async () => {
+    if (!jobDescription.title || !jobDescription.content) {
+      alert("Please fill out the job title and description.");
       return;
     }
-
     if (!resumeFile && !latexCode.trim()) {
-      alert("Please upload a .tex file or paste your LaTeX code.");
+      alert("Please upload a .tex file or paste LaTeX code.");
       return;
     }
 
-    // Start mock AI processing
-    setIsLoading(true);
-    setIsResultVisible(true);
-    setTailoredResume("🧠 Tailoring your resume, please wait...");
+    try {
+      setIsLoading(true);
+      setIsResultVisible(true);
+      setTailoredResume("🧠 Saving job description and uploading resume...");
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+      console.log('Auth Token:', localStorage.getItem('authToken'));
+      console.log('Mutation variables:', {
+        title: jobDescription.title,
+        content: jobDescription.content,
+      });
+
+      // Create job description
+      const { data: jobData } = await createJobDescription({
+        variables: {
+          title: jobDescription.title,
+          content: jobDescription.content,
+        },
+      });
+
+      console.log('Job Description Response:', jobData);
+
+      if (!jobData?.createJobDescription) {
+        throw new Error("Failed to create job description");
+      }
+
+  // Upload resume
+  console.log('resumeFile instance:', resumeFile, resumeFile instanceof File);
+  const { data: resumeData } = await uploadResume({
+        variables: {
+          title: jobDescription.title,
+          latexCode: latexCode || undefined,
+          file: resumeFile || undefined,
+          fileType: resumeFile?.type || (latexCode ? "text/latex" : undefined),
+        },
+        context: {
+          hasUpload: true,
+        },
+      });
+
+      console.log('Resume Upload Response:', resumeData);
+
+      if (!resumeData?.uploadResume) {
+        throw new Error("Failed to upload resume");
+      }
+
+      const job = jobData.createJobDescription;
+      const resume = resumeData.uploadResume;
+
       setTailoredResume(
-        "✅ Your tailored resume has been successfully generated based on the provided job description and resume input."
+        `✅ Created job "${job.title}" and uploaded "${resume.title}"\n` +
+        `🗂️ Type: ${resume.fileType || "LaTeX Code"}\n` +
+        `📅 ${new Date(resume.createdAt).toLocaleString()}\n` +
+        `${resume.fileUrl ? `📎 File URL: ${resume.fileUrl}` : ""}`
       );
-    }, 2000);
+
+    } catch (error: any) {
+      console.error("Operation failed:", error);
+      if (error.networkError) {
+        console.error('Network error:', error.networkError?.result || error.networkError);
+      }
+      if (error.graphQLErrors) {
+        console.error('GraphQL errors:', error.graphQLErrors);
+      }
+      setTailoredResume(`❌ Operation failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -48,8 +107,6 @@ export default function ResumeTailorPage() {
       <h1 className="text-3xl font-semibold text-center pt-10 mb-8">
         Resume Tailor AI
       </h1>
-
-      {/* Layout */}
       <div
         className={`transition-all duration-500 ease-in-out ${
           isResultVisible
@@ -57,7 +114,6 @@ export default function ResumeTailorPage() {
             : "flex items-center justify-center"
         }`}
       >
-        {/* Left Side (Form Section) */}
         <div
           className={`space-y-6 w-full ${
             isResultVisible ? "" : "max-w-xl p-6 bg-white rounded-2xl shadow-md"
@@ -79,16 +135,16 @@ export default function ResumeTailorPage() {
             {isLoading ? "Processing..." : "✂️ Tailor Resume"}
           </Button>
         </div>
-
-        {/* Right Side (Tailor Result) */}
         {isResultVisible && (
-          <div className="flex justify-center ">
-         
-              <TailorResult tailoredResume={tailoredResume} />
-       
-          </div>
+    
+            <TailorResult tailoredResume={tailoredResume} />
+    
         )}
       </div>
     </div>
   );
+}
+
+export default function ResumeTailorPage() {
+  return <ResumeTailorContent />;
 }

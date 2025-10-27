@@ -1,19 +1,27 @@
+// server/src/graphql/context.js
 import { prisma } from "../db/prisma.js";
 import { verifyAccessToken } from "../modules/auth/tokens.js";
 
-export default async function context({ req }) {
-  const auth = req.headers.authorization || "";
+export async function createContext({ req }) {
   let user = null;
-
-  if (auth.startsWith("Bearer ")) {
-    const token = auth.split(" ")[1];
-    const payload = verifyAccessToken(token);
-    if (payload?.sub) {
-      user = await prisma.user.findUnique({
-        where: { id: Number(payload.sub) },
-      });
+  
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      if (token) {
+        const decoded = verifyAccessToken(token);
+        user = await prisma.user.findUnique({ 
+          where: { id: decoded.sub }
+        });
+      }
     }
+  } catch (error) {
+    console.error('Auth error:', error);
   }
 
-  return { prisma, user };
+  return {
+    prisma, // Make sure prisma is being passed here
+    user,
+  };
 }
