@@ -9,9 +9,10 @@ import { Upload, FileText } from "lucide-react";
 interface ResumeUploadBoxProps {
   onFileSelect: (file: File | null) => void;
   onLatexChange: (latex: string) => void;
+  latexValue?: string;
 }
 
-export function ResumeUploadBox({ onFileSelect, onLatexChange }: ResumeUploadBoxProps) {
+export function ResumeUploadBox({ onFileSelect, onLatexChange, latexValue }: ResumeUploadBoxProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -88,6 +89,7 @@ export function ResumeUploadBox({ onFileSelect, onLatexChange }: ResumeUploadBox
           <TabsContent value="paste">
             <Textarea
               placeholder="Paste your LaTeX resume code here..."
+              value={latexValue || ""}
               onChange={(e) => onLatexChange(e.target.value)}
               className="min-h-[200px]"
             />
