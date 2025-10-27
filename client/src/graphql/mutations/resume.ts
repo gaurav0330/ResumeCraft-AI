@@ -19,6 +19,13 @@ export const UPLOAD_RESUME_MUTATION = gql`
       latexCode
       fileUrl
       fileType
+      sections {
+        id
+        sectionName
+        content
+        createdAt
+        updatedAt
+      }
       createdAt
       updatedAt
     }

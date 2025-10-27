@@ -1,6 +1,7 @@
 import { GraphQLUpload } from "graphql-upload-minimal";
 import { uploadToCloudinary } from "../../utils/cloudinary.js";
 import { AuthenticationError } from "apollo-server-errors";
+import { extractLatexSections } from "../../utils/latexParser.js";
 
 export default {
   Upload: GraphQLUpload,
@@ -12,7 +13,10 @@ export default {
       if (userId && parseInt(userId) !== user.id) {
         throw new AuthenticationError("Cannot access another user's data");
       }
-      return prisma.resume.findMany({ where: { userId: idToUse } });
+      return prisma.resume.findMany({ 
+        where: { userId: idToUse },
+        include: { sections: true }
+      });
     },
     
   },
@@ -33,6 +37,7 @@ export default {
         // Check if user already has a resume
         const existingResume = await prisma.resume.findFirst({
           where: { userId: user.id },
+          include: { sections: true }
         });
     
         // Determine which field to keep based on input
@@ -65,8 +70,37 @@ export default {
             where: { id: existingResume.id },
             data: updatedData,
           });
-          console.log("Updated resume:", updatedResume);
-          return updatedResume;
+          
+          // Extract and update sections from LaTeX code
+          if (latexCode) {
+            const sections = extractLatexSections(latexCode);
+            
+            // Delete existing sections
+            await prisma.resumeSection.deleteMany({
+              where: { resumeId: existingResume.id }
+            });
+            
+            // Create new sections
+            if (sections && sections.length > 0) {
+              await prisma.resumeSection.createMany({
+                data: sections.map(section => ({
+                  resumeId: existingResume.id,
+                  sectionName: section.sectionName,
+                  content: section.content
+                }))
+              });
+              console.log(`Created ${sections.length} resume sections`);
+            }
+          }
+          
+          // Fetch updated resume with sections
+          const resumeWithSections = await prisma.resume.findUnique({
+            where: { id: existingResume.id },
+            include: { sections: true }
+          });
+          
+          console.log("Updated resume with sections:", resumeWithSections);
+          return resumeWithSections;
         }
     
         // Create new resume
@@ -76,8 +110,31 @@ export default {
             ...updatedData,
           },
         });
-        console.log("Created resume:", newResume);
-        return newResume;
+        
+        // Extract and create sections from LaTeX code
+        if (latexCode) {
+          const sections = extractLatexSections(latexCode);
+          
+          if (sections && sections.length > 0) {
+            await prisma.resumeSection.createMany({
+              data: sections.map(section => ({
+                resumeId: newResume.id,
+                sectionName: section.sectionName,
+                content: section.content
+              }))
+            });
+            console.log(`Created ${sections.length} resume sections`);
+          }
+        }
+        
+        // Fetch created resume with sections
+        const resumeWithSections = await prisma.resume.findUnique({
+          where: { id: newResume.id },
+          include: { sections: true }
+        });
+        
+        console.log("Created resume with sections:", resumeWithSections);
+        return resumeWithSections;
     
       } catch (error) {
         console.error("Error uploading/updating resume:", error);

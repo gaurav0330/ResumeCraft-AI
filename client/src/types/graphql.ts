@@ -13,12 +13,21 @@ export interface JobDescription {
   updatedAt: string;
 }
 
+export interface ResumeSection {
+  id: string;
+  sectionName: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Resume {
   id: string;
   title: string;
   latexCode?: string;
   fileUrl?: string;
   fileType?: string;
+  sections?: ResumeSection[];
   createdAt: string;
   updatedAt: string;
 }
