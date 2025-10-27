@@ -6,10 +6,15 @@ export default {
   Upload: GraphQLUpload,
 
   Query: {
-    getUserResumes: async (_, __, { prisma, user }) => {
+    getUserResumes: async (_, { userId }, { prisma, user }) => {
       if (!user) throw new AuthenticationError("Unauthorized");
-      return prisma.resume.findMany({ where: { userId: user.id } });
+      const idToUse = userId ? parseInt(userId) : user.id;
+      if (userId && parseInt(userId) !== user.id) {
+        throw new AuthenticationError("Cannot access another user's data");
+      }
+      return prisma.resume.findMany({ where: { userId: idToUse } });
     },
+    
   },
 
   Mutation: {
