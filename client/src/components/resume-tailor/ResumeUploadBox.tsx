@@ -4,9 +4,7 @@ import { useState, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Upload, FileText, Eye, Code } from "lucide-react";
-import { LaTeXPreview } from "./LaTeXPreview";
+import { Upload, FileText } from "lucide-react";
 
 interface ResumeUploadBoxProps {
   onFileSelect: (file: File | null) => void;
@@ -37,10 +35,6 @@ export function ResumeUploadBox({ onFileSelect, onLatexChange, latexValue }: Res
 
   const handleLatexChange = (value: string) => {
     onLatexChange(value);
-    // Switch to preview tab if LaTeX code is added
-    if (value.trim() && activeTab === "paste") {
-      setActiveTab("preview");
-    }
   };
 
   return (
@@ -50,12 +44,9 @@ export function ResumeUploadBox({ onFileSelect, onLatexChange, latexValue }: Res
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="upload">Upload .tex or .pdf</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="upload">Upload .tex file</TabsTrigger>
             <TabsTrigger value="paste">Paste LaTeX Code</TabsTrigger>
-            <TabsTrigger value="preview" disabled={!latexValue?.trim()}>
-              Preview
-            </TabsTrigger>
           </TabsList>
 
           {/* Upload Tab */}
@@ -66,7 +57,7 @@ export function ResumeUploadBox({ onFileSelect, onLatexChange, latexValue }: Res
             >
               <Upload className="mx-auto mb-2 h-8 w-8 text-gray-400" />
               <p className="text-sm text-gray-500">
-                Drag & drop your <code>.tex</code> or <code>.pdf</code> file here or click to browse
+                Drag & drop your <code>.tex</code> file here or click to browse
               </p>
               <input
                 type="file"
@@ -106,32 +97,15 @@ export function ResumeUploadBox({ onFileSelect, onLatexChange, latexValue }: Res
                 placeholder="Paste your LaTeX resume code here..."
                 value={latexValue || ""}
                 onChange={(e) => handleLatexChange(e.target.value)}
-                className="min-h-[200px] font-mono text-sm"
+                className="min-h-[250px] font-mono text-sm"
               />
               {latexValue?.trim() && (
                 <div className="flex items-center gap-2 text-sm text-blue-600">
-                  <Eye className="h-4 w-4" />
-                  <span>Switch to Preview tab to see rendered output</span>
+                  <FileText className="h-4 w-4" />
+                  <span>Preview will appear on the right side</span>
                 </div>
               )}
             </div>
-          </TabsContent>
-
-          {/* Preview Tab */}
-          <TabsContent value="preview">
-            {latexValue?.trim() ? (
-              <LaTeXPreview 
-                latexCode={latexValue} 
-                title="Resume Preview"
-                className="border-0 shadow-none"
-              />
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                <Code className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>No LaTeX code to preview</p>
-                <p className="text-sm">Add some LaTeX code in the "Paste LaTeX Code" tab</p>
-              </div>
-            )}
           </TabsContent>
         </Tabs>
       </CardContent>
