@@ -1,12 +1,18 @@
 /**
  * LaTeX Parser Utility
  * Extracts different sections from LaTeX resume code
+ * 
+ * IMPORTANT: This function preserves the RAW LaTeX code for each section,
+ * including all LaTeX commands (\textbf, \item, \begin\itemize, etc.).
+ * The content stored in the database is the complete LaTeX code that can be
+ * used to reconstruct or re-render the section.
  */
 
 /**
  * Extract sections from LaTeX code
+ * Returns raw LaTeX code for each section (all commands preserved)
  * @param {string} latexCode - The LaTeX code to parse
- * @returns {Array<{sectionName: string, content: string}>}
+ * @returns {Array<{sectionName: string, content: string}>} - Array with sectionName and raw LaTeX content
  */
 export function extractLatexSections(latexCode) {
   if (!latexCode || typeof latexCode !== 'string') {
@@ -21,39 +27,29 @@ export function extractLatexSections(latexCode) {
   // Add all sections we found
   sectionMatches.forEach((match, index) => {
     const sectionName = match[1].trim();
-    const startPos = match.index + match[0].length;
+    const startPos = match.index;
+    const sectionHeader = match[0];
     
-    // Find where this section ends (next major section, or subsection followed by major section, or end of document)
+    // Find where this section ends (next major section or end of document)
     let endPos = latexCode.length;
     
-    // Look for next major section or hrule followed by section
-    const remainingText = latexCode.substring(startPos);
+    // Look for next major section or subsection followed by major section
+    const remainingText = latexCode.substring(startPos + sectionHeader.length);
     const nextSectionMatch = remainingText.match(/\\section\*/);
     
     if (nextSectionMatch) {
-      endPos = startPos + nextSectionMatch.index;
+      endPos = startPos + sectionHeader.length + nextSectionMatch.index;
     } else {
       endPos = latexCode.length;
     }
     
-    // Extract the content
-    let content = latexCode.substring(startPos, endPos);
+    // Extract the raw LaTeX content (including the section header)
+    // This preserves ALL LaTeX commands (\textbf, \item, \begin\itemize, etc.)
+    let content = latexCode.substring(startPos, endPos).trim();
     
-    // Stop at hrule marker
-    const hruleMatch = content.match(/\\hrule/);
-    if (hruleMatch) {
-      content = content.substring(0, hruleMatch.index);
-    }
-    
-    content = content.trim();
-    
-    // Clean up the content
+    // Store the raw LaTeX code without cleaning - this allows reconstruction
     if (content && content.length > 0) {
-      content = cleanLatexContent(content);
-      
-      if (content && content.length > 0) {
-        sections.push({ sectionName, content });
-      }
+      sections.push({ sectionName, content });
     }
   });
 
@@ -73,10 +69,8 @@ export function extractLatexSections(latexCode) {
     fallbackPatterns.forEach(({ name, regex }) => {
       const match = latexCode.match(regex);
       if (match) {
-        let content = match[0];
-        // Remove hrule
-        content = content.replace(/\\hrule/g, '');
-        content = cleanLatexContent(content);
+        const content = match[0].trim();
+        // Store raw LaTeX without cleaning - preserves all LaTeX commands
         if (content && content.length > 0) {
           sections.push({ sectionName: name, content });
         }
