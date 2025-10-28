@@ -20,6 +20,35 @@ export function extractLatexSections(latexCode) {
   }
 
   const sections = [];
+  const code = latexCode;
+  
+  // Attempt to extract header/contact block before first \section*
+  try {
+    const firstSectionIdx = code.search(/\\section\*/);
+    const searchAreaEnd = firstSectionIdx > -1 ? firstSectionIdx : Math.min(code.length, 4000);
+    const headerArea = code.slice(0, searchAreaEnd);
+    // Header usually wrapped in flushleft with hrule separators
+    const headerStart = headerArea.search(/\\begin\{flushleft\}/i);
+    if (headerStart > -1) {
+      // Find end: next \hrule after the flushleft block
+      const afterStart = headerArea.slice(headerStart);
+      const hruleIdx = afterStart.search(/\\hrule/i);
+      let headerEndIdx;
+      if (hruleIdx > -1) {
+        headerEndIdx = headerStart + hruleIdx + afterStart.match(/\\hrule/i)[0].length;
+      } else {
+        // fallback: end of flushleft
+        const flushEndRel = afterStart.search(/\\end\{flushleft\}/i);
+        headerEndIdx = flushEndRel > -1 ? headerStart + flushEndRel + afterStart.match(/\\end\{flushleft\}/i)[0].length : searchAreaEnd;
+      }
+      const headerContent = code.substring(headerStart, headerEndIdx).trim();
+      if (headerContent) {
+        sections.push({ sectionName: 'HEADER', content: headerContent });
+      }
+    }
+  } catch (e) {
+    // swallow parsing errors silently, fallback matchers below can still work
+  }
   
   // Find all major sections (not subsections)
   const sectionMatches = [...latexCode.matchAll(/\\section\*\{([^}]+)\}/gi)];
@@ -56,7 +85,7 @@ export function extractLatexSections(latexCode) {
   // If no sections found via section markers, try fallback patterns
   if (sections.length === 0) {
     const fallbackPatterns = [
-      { name: 'Contact Information', regex: /\\begin\{flushleft\}[\s\S]*?Contact[\s\S]*?\\hrule/gi },
+      { name: 'HEADER', regex: /\\begin\{flushleft\}[\s\S]*?\\hrule/gi },
       { name: 'Summary', regex: /SUMMARY[\s\S]*?\\hrule/gi },
       { name: 'Experience', regex: /EXPERIENCE[\s\S]*?\\hrule/gi },
       { name: 'Skills', regex: /SKILLS[\s\S]*?\\hrule/gi },

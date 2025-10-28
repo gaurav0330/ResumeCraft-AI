@@ -2,7 +2,7 @@ import { generateCompletion } from "./aiClient.js";
 import logger from "../config/logger.js";
 
 function buildSectionPrompt({ jdTitle, jdContent, sectionName, sectionLatex }) {
-  return `You are an ATS-friendly resume optimizer.
+  return `You are an ATS-optimized resume rewriting assistant.
 
 JOB DESCRIPTION:
 Title: ${jdTitle}
@@ -14,14 +14,17 @@ LaTeX:
 ${sectionLatex}
 
 TASK:
-Rewrite ONLY this section in LaTeX to better match the job description by:
-- Including relevant JD keywords naturally (skills, tools, certifications)
-- Preserving truthful, factual content
-- Quantifying achievements if appropriate
-- Keeping LaTeX intact (do not break environments)
-- Keep section header if present
+Rewrite ONLY this section in LaTeX to better align with the job description by:
+- Naturally integrating relevant JD keywords (skills, tools, certifications) where appropriate
+- Keeping all content truthful and realistic (no fabrication or exaggeration)
+- Maintaining approximately the same length — do NOT add unnecessary details or explanations
+- Skipping redundant or already matching keywords/sentences from the JD to avoid repetition
+- Quantifying results briefly where suitable (use concise metrics if possible)
+- Preserving all LaTeX formatting and environments exactly
+- Retaining section headers and structure
 
-Return ONLY LaTeX for this section.`;
+Return ONLY the revised LaTeX for this section, without any extra commentary or formatting outside the LaTeX code.`
+;
 }
 
 function combineSectionsToLatex(sections) {

@@ -5,6 +5,8 @@ import "./globals.css";
 import ApolloProviderWrapper from "@/components/provider/ApolloProviderWrapper";
 import ReduxProviderWrapper from "@/components/provider/ReduxProviderWrapper";
 import { AuthProviderWrapper } from "@/components/provider/AuthProviderWrapper";
+import { ThemeProvider } from "@/components/provider/ThemeProvider";
+import AppShell from "@/components/provider/AppShell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,11 +29,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <AuthProviderWrapper>
-          <ApolloProviderWrapper>
-            <ReduxProviderWrapper>{children}</ReduxProviderWrapper>
-          </ApolloProviderWrapper>
-        </AuthProviderWrapper>
+        <ThemeProvider>
+          <AuthProviderWrapper>
+            <ApolloProviderWrapper>
+              <ReduxProviderWrapper>
+                <AppShell>{children}</AppShell>
+              </ReduxProviderWrapper>
+            </ApolloProviderWrapper>
+          </AuthProviderWrapper>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -18,6 +18,8 @@ export function LaTeXPreview({ latexCode, title = "LaTeX Preview", className }: 
   const [compilationError, setCompilationError] = useState<string | null>(null);
   const [compiledHTML, setCompiledHTML] = useState<string>("");
   const previewRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
 
   // Pixel-perfect LaTeX to HTML converter
   const basicLatexToHtml = (code: string): string => {
@@ -331,6 +333,21 @@ export function LaTeXPreview({ latexCode, title = "LaTeX Preview", className }: 
     }
   }, [latexCode]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (!containerRef.current) return;
+      // Approximate A4 width in px at 96dpi: 210mm ≈ 793.7px
+      const pageWidthPx = 794;
+      const containerWidth = containerRef.current.clientWidth;
+      if (!containerWidth) return;
+      const nextScale = Math.min(1, Math.max(0.5, containerWidth / (pageWidthPx + 32)));
+      setScale(nextScale);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [compiledHTML]);
+
   const handleDownloadPDF = () => {
     if (!compiledHTML) return;
     
@@ -448,14 +465,20 @@ export function LaTeXPreview({ latexCode, title = "LaTeX Preview", className }: 
               </div>
             ) : compiledHTML ? (
               <>
-                <div 
-                  ref={previewRef}
-                  className="overflow-auto bg-gray-50 p-4"
-                  style={{ 
-                    minHeight: '600px',
-                  }}
-                  dangerouslySetInnerHTML={{ __html: compiledHTML }}
-                />
+                <div className="bg-muted/50">
+                  <div ref={containerRef} className="overflow-auto p-4">
+                    <div
+                      className="origin-top-left"
+                      style={{ transform: `scale(${scale})`, width: `${100 / scale}%` }}
+                    >
+                      <div 
+                        ref={previewRef}
+                        className=""
+                        dangerouslySetInnerHTML={{ __html: compiledHTML }}
+                      />
+                    </div>
+                  </div>
+                </div>
                 <style jsx>{`
                   div[style*="text-align"] {
                     display: block;
