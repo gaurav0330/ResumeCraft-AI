@@ -6,6 +6,7 @@ export const GET_USER_RESUMES_QUERY = gql`
       id
       title
       latexCode
+      optimizedLatex
       fileUrl
       fileType
       sections {

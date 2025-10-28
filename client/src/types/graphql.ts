@@ -25,11 +25,33 @@ export interface Resume {
   id: string;
   title: string;
   latexCode?: string;
+  optimizedLatex?: string;
   fileUrl?: string;
   fileType?: string;
   sections?: ResumeSection[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface OptimizedChange {
+  sectionName: string;
+  changeType: string;
+  originalContent?: string;
+  newContent?: string;
+  explanation?: string;
+}
+
+export interface OptimizedSection {
+  sectionName: string;
+  content: string;
+}
+
+export interface OptimizeResumePreviewResponse {
+  optimizeResumePreview: {
+    optimizedLatex: string;
+    optimizedSections: OptimizedSection[];
+    changes: OptimizedChange[];
+  };
 }
 
 export interface GetUserJobDescriptionsResponse {
