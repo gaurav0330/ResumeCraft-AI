@@ -24,4 +24,15 @@ export const config = {
   refreshSecret: process.env.REFRESH_TOKEN_SECRET,
   tokenExpiry: process.env.TOKEN_EXPIRY || "15000m",
   refreshExpiryDays: Number(process.env.REFRESH_EXPIRY_DAYS || 7),
+  // AI key can be provided as HF_API_KEY or HUGGING_FACE_API_KEY
+  aiKey: process.env.HF_API_KEY || process.env.HUGGING_FACE_API_KEY || "",
 };
+
+if (!config.aiKey) {
+  logger.warn("⚠️ HF_API_KEY/HUGGING_FACE_API_KEY not set. AI optimization will return unchanged sections.");
+} else {
+  const masked = config.aiKey.length > 8
+    ? `${config.aiKey.slice(0, 4)}...${config.aiKey.slice(-4)}`
+    : "(hidden)";
+  logger.info(`🤖 AI key loaded (HF), using Bearer ${masked}`);
+}
