@@ -58,14 +58,10 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md p-6 shadow-lg">
-        <h2 className="text-2xl font-bold text-center mb-2">
-          Create Your Account
-        </h2>
-        <p className="text-sm text-gray-500 text-center mb-4">
-          Join and start crafting the perfect resume.
-        </p>
+    <div className="min-h-[calc(100vh-3.5rem-3rem)] flex items-center justify-center">
+      <Card className="w-full max-w-md p-6">
+        <h2 className="text-2xl font-bold text-center mb-2">Create account</h2>
+        <p className="text-sm text-muted-foreground text-center mb-4">Join and start crafting the perfect resume.</p>
 
         <CardContent className="flex flex-col gap-3">
           <div>
@@ -116,13 +112,13 @@ export default function SignUp() {
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="mt-4 w-full bg-indigo-600 text-white hover:bg-indigo-700"
+            className="mt-4 w-full"
           >
             {loading ? "Creating..." : "Sign Up"}
           </Button>
 
           {error && (
-            <p className="text-red-500 text-sm mt-2">{error.message}</p>
+            <p className="text-destructive text-sm mt-2">{error.message}</p>
           )}
         </CardContent>
 
@@ -132,7 +128,7 @@ export default function SignUp() {
           <Separator className="flex-1" />
         </div>
 
-        <p className="text-xs text-center text-gray-500 mt-4">
+        <p className="text-xs text-center text-muted-foreground mt-4">
           Already have an account?{" "}
           <a className="text-indigo-600 hover:underline" href="/login">
             Log in here

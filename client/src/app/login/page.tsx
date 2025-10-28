@@ -87,12 +87,12 @@ const handleSubmit = async (e: React.FormEvent) => {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md p-6 shadow-lg">
+    <div className="min-h-[calc(100vh-3.5rem-3rem)] flex items-center justify-center">
+      <Card className="w-full max-w-md p-6">
         <div className="flex flex-col items-center mb-4">
-          <img src="/logo.svg" alt="Logo" className="w-12 h-12" />
-          <h2 className="text-2xl font-bold mt-3">AI Resume Tailor</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center text-xl font-bold">R</div>
+          <h2 className="text-2xl font-bold mt-3">Welcome back</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Welcome back! Please login to your account.
           </p>
         </div>
@@ -111,7 +111,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 aria-invalid={!!formErrors.email}
               />
               {formErrors.email && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+                <p className="text-destructive text-xs mt-1">{formErrors.email}</p>
               )}
             </div>
 
@@ -127,20 +127,20 @@ const handleSubmit = async (e: React.FormEvent) => {
                 aria-invalid={!!formErrors.password}
               />
               {formErrors.password && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
+                <p className="text-destructive text-xs mt-1">{formErrors.password}</p>
               )}
             </div>
 
             <Button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full bg-indigo-600 text-white hover:bg-indigo-700"
+              className="mt-2 w-full"
             >
               {loading ? "Logging in..." : "Login"}
             </Button>
 
             {error && (
-              <p className="text-red-500 text-sm mt-2 text-center">
+              <p className="text-destructive text-sm mt-2 text-center">
                 {error.message}
               </p>
             )}
@@ -153,7 +153,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           <Separator className="flex-1" />
         </div>
 
-        <p className="text-xs text-center text-gray-500 mt-4">
+        <p className="text-xs text-center text-muted-foreground mt-4">
           Don't have an account?{" "}
           <Link href="/signup" className="text-indigo-600 hover:underline">
             Create one
