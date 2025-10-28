@@ -10,6 +10,7 @@ type Resume {
   id: ID!
   title: String!
   latexCode: String
+  optimizedLatex: String
   fileUrl: String
   fileType: String
   sections: [ResumeSection!]!
@@ -31,4 +32,35 @@ type Mutation {
     file: Upload
     fileType: String
   ): Resume!
+
+  # Generate AI-optimized preview (does NOT persist)
+  optimizeResumePreview(
+    resumeId: ID!
+    jobDescriptionId: ID!
+  ): OptimizedResumePreview!
+
+  # Accept preview and persist optimizedLaTeX onto existing resume
+  acceptOptimizedResume(
+    resumeId: ID!
+    optimizedLatex: String!
+  ): Resume!
+}
+
+type OptimizedChange {
+  sectionName: String!
+  changeType: String! # added | modified | removed | unchanged
+  originalContent: String
+  newContent: String
+  explanation: String
+}
+
+type OptimizedSection {
+  sectionName: String!
+  content: String!
+}
+
+type OptimizedResumePreview {
+  optimizedLatex: String!
+  optimizedSections: [OptimizedSection!]!
+  changes: [OptimizedChange!]!
 }
