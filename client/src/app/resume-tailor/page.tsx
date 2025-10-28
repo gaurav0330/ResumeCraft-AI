@@ -11,11 +11,11 @@ import { Textarea } from "@/components/ui/textarea";
 import ProtectedRoute from "@/components/provider/ProtectedRoute";
 import { useAuth } from "@/components/provider/AuthProviderWrapper";
 
-import { UPLOAD_RESUME_MUTATION } from "@/graphql/mutations/resume";
+import { UPLOAD_RESUME_MUTATION, OPTIMIZE_RESUME_PREVIEW, ACCEPT_OPTIMIZED_RESUME } from "@/graphql/mutations/resume";
 import { CREATE_JOB_DESCRIPTION_MUTATION } from "@/graphql/mutations/jobDescription";
 import { GET_JOB_DESCRIPTIONS } from "@/graphql/queries/jobdescription";
 import { GET_USER_RESUMES_QUERY } from "@/graphql/queries/resume";
-import type { GetUserJobDescriptionsResponse, GetUserResumesResponse, CreateJobDescriptionResponse, UploadResumeResponse } from "@/types/graphql";
+import type { GetUserJobDescriptionsResponse, GetUserResumesResponse, CreateJobDescriptionResponse, UploadResumeResponse, OptimizeResumePreviewResponse, Resume } from "@/types/graphql";
 
 function ResumeTailorContent() {
   const { user } = useAuth();
@@ -41,6 +41,10 @@ function ResumeTailorContent() {
 
   const [createJobDescription] = useMutation(CREATE_JOB_DESCRIPTION_MUTATION);
   const [uploadResume] = useMutation(UPLOAD_RESUME_MUTATION);
+  const [optimizePreview, { data: previewData, loading: previewLoading }] = useMutation(OPTIMIZE_RESUME_PREVIEW);
+  const [acceptOptimized, { loading: acceptLoading }] = useMutation(ACCEPT_OPTIMIZED_RESUME, {
+    refetchQueries: [{ query: GET_USER_RESUMES_QUERY, variables: { userId: user?.id } }],
+  });
 
   // --- Populate data from DB if exists ---
   useEffect(() => {
@@ -60,6 +64,42 @@ function ResumeTailorContent() {
       setLatexCode(existingResume.latexCode || "");
     }
   }, [jdData, resumeData]);
+
+  const existingJD = jdData?.getUserJobDescriptions?.[0];
+  const existingResume = (resumeData?.getUserResumes?.[0] as Resume | undefined);
+
+  const handleOptimizePreview = async () => {
+    if (!existingJD?.id || !existingResume?.id) {
+      alert("Need a saved Job Description and Resume first.");
+      return;
+    }
+    try {
+      setIsLoading(true);
+      await optimizePreview({ variables: { resumeId: existingResume.id, jobDescriptionId: existingJD.id } });
+    } catch (e: any) {
+      console.error(e);
+      alert(e.message || "Failed to generate preview");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAccept = async () => {
+    const optimizedLatex = (previewData as OptimizeResumePreviewResponse | undefined)?.optimizeResumePreview?.optimizedLatex;
+    if (!optimizedLatex || !existingResume?.id) return;
+    try {
+      await acceptOptimized({ variables: { resumeId: existingResume.id, optimizedLatex } });
+      alert("Optimized resume saved.");
+    } catch (e: any) {
+      console.error(e);
+      alert(e.message || "Failed to save optimized resume");
+    }
+  };
+
+  const handleReject = () => {
+    // Simply discard preview from UI
+    window.location.reload();
+  };
 
   const handleTailorResume = async () => {
     if (!jobDescription.title || !jobDescription.content) {
@@ -185,7 +225,67 @@ function ResumeTailorContent() {
         {/* Right Column - Preview */}
         <div className="lg:sticky lg:top-6 lg:self-start">
           {latexCode ? (
-            <TailorResult tailoredResume={tailoredResume} latexCode={latexCode} />
+            <div className="space-y-6">
+              <TailorResult tailoredResume={tailoredResume} latexCode={latexCode} />
+
+              {hasExistingData && (
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Optimize for this JD</h3>
+                    <Button onClick={handleOptimizePreview} disabled={isLoading || previewLoading} className="bg-emerald-600 hover:bg-emerald-700">
+                      {previewLoading ? "Analyzing..." : "🎯 Optimize Resume"}
+                    </Button>
+                  </div>
+
+                  {(previewData as OptimizeResumePreviewResponse | undefined)?.optimizeResumePreview && (
+                    <div className="space-y-6">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <LaTeXPreview title="Original" latexCode={(existingResume?.optimizedLatex || existingResume?.latexCode) ?? ""} />
+                        <LaTeXPreview title="Optimized Preview" latexCode={(previewData as OptimizeResumePreviewResponse).optimizeResumePreview.optimizedLatex} />
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-4 border">
+                        <h4 className="font-semibold mb-3">Changes</h4>
+                        <div className="max-h-64 overflow-auto pr-2">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-left text-gray-600">
+                                <th className="py-1 pr-3">Section</th>
+                                <th className="py-1 pr-3">Change</th>
+                                <th className="py-1">Note</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(previewData as OptimizeResumePreviewResponse).optimizeResumePreview.changes.map((c: any, idx: number) => (
+                                <tr key={idx} className="border-t">
+                                  <td className="py-2 pr-3 font-medium">{c.sectionName}</td>
+                                  <td className="py-2 pr-3">
+                                    <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                      c.changeType === 'modified' ? 'bg-yellow-100 text-yellow-800' :
+                                      c.changeType === 'added' ? 'bg-emerald-100 text-emerald-800' :
+                                      c.changeType === 'removed' ? 'bg-red-100 text-red-800' :
+                                      'bg-gray-100 text-gray-700'
+                                    }`}>
+                                      {c.changeType}
+                                    </span>
+                                  </td>
+                                  <td className="py-2 text-gray-600">{c.explanation || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <Button onClick={handleAccept} disabled={acceptLoading} className="bg-blue-600 hover:bg-blue-700">✅ Accept & Save</Button>
+                        <Button onClick={handleReject} variant="outline">✖️ Reject</Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           ) : (
             <div className="bg-white rounded-xl shadow-md border border-gray-200 p-12 min-h-[500px] flex items-center justify-center">
               <div className="text-center">
