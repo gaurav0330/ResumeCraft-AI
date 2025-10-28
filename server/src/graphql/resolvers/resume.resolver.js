@@ -2,6 +2,7 @@ import { GraphQLUpload } from "graphql-upload-minimal";
 import { uploadToCloudinary } from "../../utils/cloudinary.js";
 import { AuthenticationError } from "apollo-server-errors";
 import { extractLatexSections } from "../../utils/latexParser.js";
+import logger from "../../config/logger.js";
 import { optimizeResume } from "../../services/resumeOptimizer.js";
 
 export default {
@@ -74,24 +75,33 @@ export default {
           
           // Extract and update sections from LaTeX code
           if (latexCode) {
-            const sections = extractLatexSections(latexCode);
-            
-            // Delete existing sections
-            await prisma.resumeSection.deleteMany({
-              where: { resumeId: existingResume.id }
-            });
-            
-            // Create new sections
-            if (sections && sections.length > 0) {
-              await prisma.resumeSection.createMany({
-                data: sections.map(section => ({
-                  resumeId: existingResume.id,
-                  sectionName: section.sectionName,
-                  content: section.content
-                }))
-              });
-              console.log(`Created ${sections.length} resume sections`);
+            const rawSections = extractLatexSections(latexCode);
+            // Deduplicate by sectionName (case-insensitive), keep first occurrence
+            const seen = new Set();
+            const sections = [];
+            for (const s of rawSections) {
+              const key = (s.sectionName || '').trim().toLowerCase();
+              if (!key || seen.has(key)) continue;
+              seen.add(key);
+              sections.push(s);
             }
+            const sectionNames = sections.map(s => s.sectionName);
+            logger.info(`[DB] Updating resume ${existingResume.id}: extracted ${sections.length} sections -> ${JSON.stringify(sectionNames)}`);
+            
+            // Update sections atomically: delete ALL sections for this user, then insert new ones for current resume
+            await prisma.$transaction(async (tx) => {
+              await tx.resumeSection.deleteMany({ where: { resume: { userId: user.id } } });
+              if (sections && sections.length > 0) {
+                await tx.resumeSection.createMany({
+                  data: sections.map(section => ({
+                    resumeId: existingResume.id,
+                    sectionName: section.sectionName,
+                    content: section.content
+                  }))
+                });
+              }
+            });
+            logger.info(`[DB] Stored sections for resume ${existingResume.id}: ${sections.length} rows`);
           }
           
           // Fetch updated resume with sections
@@ -114,7 +124,18 @@ export default {
         
         // Extract and create sections from LaTeX code
         if (latexCode) {
-          const sections = extractLatexSections(latexCode);
+          const rawSections = extractLatexSections(latexCode);
+          // Deduplicate by sectionName (case-insensitive), keep first occurrence
+          const seen = new Set();
+          const sections = [];
+          for (const s of rawSections) {
+            const key = (s.sectionName || '').trim().toLowerCase();
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
+            sections.push(s);
+          }
+          const sectionNames = sections.map(s => s.sectionName);
+          logger.info(`[DB] Creating resume ${newResume.id}: extracted ${sections.length} sections -> ${JSON.stringify(sectionNames)}`);
           
           if (sections && sections.length > 0) {
             await prisma.resumeSection.createMany({
@@ -124,7 +145,9 @@ export default {
                 content: section.content
               }))
             });
-            console.log(`Created ${sections.length} resume sections`);
+            logger.info(`[DB] Stored sections for resume ${newResume.id}: ${sections.length} rows`);
+          } else {
+            logger.info(`[DB] No sections detected for resume ${newResume.id}`);
           }
         }
         
