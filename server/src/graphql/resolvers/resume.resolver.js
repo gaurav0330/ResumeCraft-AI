@@ -2,6 +2,7 @@ import { GraphQLUpload } from "graphql-upload-minimal";
 import { uploadToCloudinary } from "../../utils/cloudinary.js";
 import { AuthenticationError } from "apollo-server-errors";
 import { extractLatexSections } from "../../utils/latexParser.js";
+import { optimizeResume } from "../../services/resumeOptimizer.js";
 
 export default {
   Upload: GraphQLUpload,
@@ -141,6 +142,21 @@ export default {
         throw error;
       }
     },
-    
+    optimizeResumePreview: async (_, { resumeId, jobDescriptionId }, { prisma, user }) => {
+      if (!user) throw new AuthenticationError("Unauthorized");
+      const resume = await prisma.resume.findFirst({ where: { id: parseInt(resumeId), userId: user.id }, include: { sections: true } });
+      if (!resume) throw new AuthenticationError("Resume not found or not accessible");
+      const jd = await prisma.jobDescription.findFirst({ where: { id: parseInt(jobDescriptionId), userId: user.id } });
+      if (!jd) throw new AuthenticationError("Job description not found or not accessible");
+      const preview = await optimizeResume({ resume, jobDescription: jd });
+      return preview;
+    },
+    acceptOptimizedResume: async (_, { resumeId, optimizedLatex }, { prisma, user }) => {
+      if (!user) throw new AuthenticationError("Unauthorized");
+      const resume = await prisma.resume.findFirst({ where: { id: parseInt(resumeId), userId: user.id } });
+      if (!resume) throw new AuthenticationError("Resume not found or not accessible");
+      const updated = await prisma.resume.update({ where: { id: resume.id }, data: { optimizedLatex } });
+      return updated;
+    },
   },
 };
