@@ -39,7 +39,7 @@ Created a comprehensive LaTeX parser that extracts the following sections:
 
 #### Features:
 - **Pattern Matching**: Uses regex patterns to find sections
-- **Content Cleaning**: Automatically removes LaTeX commands and formatting
+- **Raw LaTeX Storage**: Stores the complete, unmodified LaTeX code for each section (preserves all commands and formatting)
 - **Smart Extraction**: Handles multiple naming conventions (e.g., "Professional Experience" vs "Work Experience")
 - **Validation**: Includes `isValidLatexResume()` function to validate LaTeX structure
 
@@ -143,7 +143,7 @@ export interface Resume {
 ### Key Features:
 - ✅ **No duplicate rows**: Updates existing sections instead of creating new ones
 - ✅ **Automatic extraction**: No manual configuration needed
-- ✅ **Clean content**: Removes LaTeX commands to store readable text
+- ✅ **Raw LaTeX storage**: Stores complete LaTeX code for each section (with all commands intact)
 - ✅ **Multiple section support**: Handles various resume section types
 - ✅ **Cascade deletion**: Deleting a resume deletes all its sections
 
