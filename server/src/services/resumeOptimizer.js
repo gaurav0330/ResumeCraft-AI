@@ -1,4 +1,5 @@
 import { generateCompletion } from "./aiClient.js";
+import logger from "../config/logger.js";
 
 function buildSectionPrompt({ jdTitle, jdContent, sectionName, sectionLatex }) {
   return `You are an ATS-friendly resume optimizer.
@@ -43,7 +44,10 @@ export async function optimizeResume({ resume, jobDescription }) {
   const optimizedSections = [];
   const changes = [];
 
+  logger.info(`[AI] Starting optimization: resumeId=${resume.id}, jdId=${jobDescription.id}, sections=${(resume.sections||[]).length}`);
+
   for (const section of (resume.sections || [])) {
+    const sectionLogPrefix = `[AI][Section:${section.sectionName}]`;
     const prompt = buildSectionPrompt({
       jdTitle,
       jdContent,
@@ -53,8 +57,11 @@ export async function optimizeResume({ resume, jobDescription }) {
 
     let optimizedLatex;
     try {
+      const t0 = Date.now();
       optimizedLatex = await generateCompletion(prompt, { maxTokens: 700, temperature: 0.2 });
+      logger.info(`${sectionLogPrefix} optimized in ${Date.now()-t0}ms; originalLen=${section.content?.length||0}, newLen=${optimizedLatex?.length||0}`);
     } catch (e) {
+      logger.error(`${sectionLogPrefix} generation failed: ${e?.message}`);
       // If a section fails, fall back to original
       optimizedLatex = section.content;
     }
@@ -75,8 +82,11 @@ export async function optimizeResume({ resume, jobDescription }) {
     const prompt = `Optimize this LaTeX resume to align with the JD while preserving structure and ATS-friendliness. Return ONLY LaTeX.\nJD Title: ${jdTitle}\nJD: ${jdContent}\n\n${resume.latexCode}`;
     let optimizedDoc;
     try {
+      const t0 = Date.now();
       optimizedDoc = await generateCompletion(prompt, { maxTokens: 2000, temperature: 0.2 });
+      logger.info(`[AI][WholeDoc] optimized in ${Date.now()-t0}ms; originalLen=${resume.latexCode?.length||0}, newLen=${optimizedDoc?.length||0}`);
     } catch (e) {
+      logger.error(`[AI][WholeDoc] generation failed: ${e?.message}`);
       optimizedDoc = resume.latexCode;
     }
     optimizedSections.push({ sectionName: "Document", content: optimizedDoc });
@@ -84,6 +94,7 @@ export async function optimizeResume({ resume, jobDescription }) {
   }
 
   const optimizedLatex = combineSectionsToLatex(optimizedSections);
+  logger.info(`[AI] Completed optimization: combinedLen=${optimizedLatex?.length||0}`);
   return { optimizedLatex, optimizedSections, changes };
 }
 
