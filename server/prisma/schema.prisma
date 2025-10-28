@@ -39,6 +39,7 @@ model Resume {
   latexCode String? // pasted LaTeX
   fileUrl   String? // Cloudinary URL
   fileType  String? // 'latex' | 'tsx' | 'pdf' | ...
+  optimizedLatex String? // AI-optimized LaTeX (user-approved)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

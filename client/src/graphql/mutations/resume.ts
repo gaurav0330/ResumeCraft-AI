@@ -17,6 +17,7 @@ export const UPLOAD_RESUME_MUTATION = gql`
       id
       title
       latexCode
+      optimizedLatex
       fileUrl
       fileType
       sections {
@@ -27,6 +28,28 @@ export const UPLOAD_RESUME_MUTATION = gql`
         updatedAt
       }
       createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const OPTIMIZE_RESUME_PREVIEW = gql`
+  mutation OptimizeResumePreview($resumeId: ID!, $jobDescriptionId: ID!) {
+    optimizeResumePreview(resumeId: $resumeId, jobDescriptionId: $jobDescriptionId) {
+      optimizedLatex
+      optimizedSections { sectionName content }
+      changes { sectionName changeType originalContent newContent explanation }
+    }
+  }
+`;
+
+export const ACCEPT_OPTIMIZED_RESUME = gql`
+  mutation AcceptOptimizedResume($resumeId: ID!, $optimizedLatex: String!) {
+    acceptOptimizedResume(resumeId: $resumeId, optimizedLatex: $optimizedLatex) {
+      id
+      title
+      latexCode
+      optimizedLatex
       updatedAt
     }
   }
