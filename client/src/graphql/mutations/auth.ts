@@ -22,3 +22,16 @@ export const REGISTER_MUTATION = gql`
     }
   }
 `;
+
+export const NEON_LOGIN_MUTATION = gql`
+  mutation NeonLogin($email: String!, $name: String, $stackToken: String) {
+    neonLogin(email: $email, name: $name, stackToken: $stackToken) {
+      accessToken
+      user {
+        id
+        email
+        username
+      }
+    }
+  }
+`;
