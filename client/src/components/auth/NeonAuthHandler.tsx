@@ -44,7 +44,7 @@ function NeonAuthHandlerContent() {
 
           if (accessToken) {
             localStorage.setItem("authToken", accessToken);
-            document.cookie = `authToken=${accessToken}; path=/; max-age=3600;`;
+            document.cookie = `authToken=${accessToken}; path=/; max-age=86400;`;
           }
 
           if (user) {
