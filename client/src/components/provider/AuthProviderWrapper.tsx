@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/provider/ToastProvider";
 
 type AuthContextType = {
   user: any;
@@ -17,6 +18,8 @@ export function AuthProviderWrapper({ children }: { children: React.ReactNode })
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { showToast } = useToast();
+  
 
   // Decode and check token expiration
   const isTokenExpired = (token: string | null): boolean => {
@@ -33,7 +36,14 @@ export function AuthProviderWrapper({ children }: { children: React.ReactNode })
     localStorage.removeItem("authToken");
     localStorage.removeItem("user");
     document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    showToast({
+      title: "Logged out",
+      description: "You have been logged out successfully.",
+      variant: "success",
+      durationMs: 3000,
+    });
     setUser(null);
+
     router.push("/login");
   };
 

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { ToastProvider, useToast } from "@/components/provider/ToastProvider";
 
 export default function LoginPage() {
   const dispatch = useDispatch();
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [formErrors, setFormErrors] = useState({ email: "", password: "" });
   const [login, { loading, error }] = useMutation(LOGIN_MUTATION);
+  const { showToast } = useToast();
 
   const validateForm = () => {
     const errors = {
@@ -75,6 +77,13 @@ const handleSubmit = async (e: React.FormEvent) => {
   if (data.login.user) {
     localStorage.setItem("user", JSON.stringify(data.login.user));
   }
+
+       // ✅ Show success toast immediately after successful login
+       showToast({
+        title: "Login successful!",
+        description: `Welcome back, ${data.login.user?.name || "user"} 👋`,
+        variant: "success",
+      });
 
    window.dispatchEvent(new Event("storage"));
       // 🕐 Small delay for cookie sync
