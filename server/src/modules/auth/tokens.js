@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || "15m";
+const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || "24h";
 
 export function generateAccessToken(userId) {
   const secret = process.env.ACCESS_TOKEN_SECRET;
