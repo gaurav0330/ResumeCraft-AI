@@ -15,7 +15,7 @@ interface ResumeUploadBoxProps {
 export function ResumeUploadBox({ onFileSelect, onLatexChange, latexValue }: ResumeUploadBoxProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [activeTab, setActiveTab] = useState("upload");
+  const [activeTab, setActiveTab] = useState("paste");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -55,17 +55,8 @@ export function ResumeUploadBox({ onFileSelect, onLatexChange, latexValue }: Res
               className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:bg-gray-100 transition"
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload className="mx-auto mb-2 h-8 w-8 text-gray-400" />
-              <p className="text-sm text-gray-500">
-                Drag & drop your <code>.tex</code> file here or click to browse
-              </p>
-              <input
-                type="file"
-                accept=".tex"
-                className="hidden"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-              />
+              comming soon ....
+       
             </div>
 
             {/* Show selected file info */}
