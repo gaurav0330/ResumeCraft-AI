@@ -304,16 +304,33 @@ function ResumeTailorContent() {
                 </Button>
 
                 {isOptimizing && (
-                  <div className="rounded-lg border p-3 bg-muted/30">
-                    <div className="text-xs text-muted-foreground mb-2">Optimization log</div>
-                    <div className="font-mono text-sm whitespace-pre-wrap leading-6">
-                      {optimizationLogs.map((line, idx) => (
-                        <div key={idx}>{line}</div>
-                      ))}
-                      <span className="opacity-60">▋</span>
-                    </div>
-                  </div>
-                )}
+  <div className="rounded-lg border bg-[#0D1117] text-[#C9D1D9] font-mono text-sm shadow-inner overflow-hidden">
+    {/* Terminal Header */}
+    <div className="flex items-center gap-2 px-3 py-2 bg-[#161B22] border-b border-gray-800">
+      <div className="flex gap-1.5">
+        <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
+        <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
+        <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
+      </div>
+      <span className="text-xs text-gray-400 ml-2">Optimization Log</span>
+    </div>
+
+    {/* Terminal Body */}
+    <div
+      className="px-4 py-3 h-60 overflow-y-auto whitespace-pre-wrap leading-6 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent"
+      id="terminal-log"
+    >
+      {optimizationLogs.map((line, idx) => (
+        <div key={idx} className="flex items-start">
+          <span className="text-[#58A6FF] mr-2">$</span>
+          <span>{line}</span>
+        </div>
+      ))}
+      <span className="animate-pulse text-[#58A6FF] ml-2">▋</span>
+    </div>
+  </div>
+)}
+
 
                 {hasExistingData && (
                   <div className="rounded-lg border p-4">

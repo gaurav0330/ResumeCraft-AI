@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { useToast } from "@/components/provider/ToastProvider";
+import { waitForDebugger } from "inspector";
 
 export default function SignUp() {
   const [registerUser, { loading, error }] = useMutation<RegisterResponse>(REGISTER_MUTATION);
@@ -28,6 +30,7 @@ export default function SignUp() {
     confirm: "",
   });
 
+  const { showToast } = useToast();
 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,7 +53,15 @@ export default function SignUp() {
       });
 
       if (data?.register) {
-        alert("Signup successful! Please log in.");
+        showToast({
+          title: "Signup Successful",
+          description: "Your account has been created successfully. Please log in.",
+          variant: "success",
+          durationMs: 4000,
+        });
+
+        
+        // Redirect to login
         window.location.href = "/login";
       }
     } catch (err) {
