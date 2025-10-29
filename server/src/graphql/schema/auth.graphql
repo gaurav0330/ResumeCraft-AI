@@ -18,4 +18,5 @@ type Mutation {
   login(email: String!, password: String!): AuthResult!
   refreshToken(refreshToken: String!): AuthResult!
   logout: Boolean!
+  neonLogin(email: String!, name: String, stackToken: String): AuthResult!
 }
