@@ -1,47 +1,67 @@
 "use client";
 
 import { useEffect, Suspense, useState } from "react";
+import { useMutation } from "@apollo/client/react";
 import { useUser } from "@stackframe/stack";
+import { stackClientApp } from "@/stack/client";
 import { useAuth } from "@/components/provider/AuthProviderWrapper";
 import { useRouter } from "next/navigation";
+import { NEON_LOGIN_MUTATION } from "@/graphql/mutations/auth";
 
 function NeonAuthHandlerContent() {
   const neonUser = useUser();
   const { setUser } = useAuth();
   const router = useRouter();
   const [hasProcessed, setHasProcessed] = useState(false);
+  const [neonLogin] = useMutation(NEON_LOGIN_MUTATION);
 
   useEffect(() => {
-    if (neonUser && !hasProcessed) {
+    const run = async () => {
+      if (!neonUser || hasProcessed) return;
       setHasProcessed(true);
-      
-      // Convert Neon Auth user to our auth format
-      const userData = {
-        id: neonUser.id,
-        email: neonUser.primaryEmail,
-        name: neonUser.displayName || neonUser.primaryEmail,
-        profileImageUrl: neonUser.profileImageUrl,
-        // Add any other fields you need
-      };
 
-      // Store in localStorage to match existing auth system
-      localStorage.setItem("user", JSON.stringify(userData));
-      
-      // Set a mock token for compatibility with existing auth system
-      const mockToken = `neon_${neonUser.id}_${Date.now()}`;
-      localStorage.setItem("authToken", mockToken);
-      document.cookie = `authToken=${mockToken}; path=/; max-age=3600;`;
+      try {
+        const email = neonUser.primaryEmail;
+        const name = neonUser.displayName || neonUser.primaryEmail;
 
-      // Update auth context
-      setUser(userData);
+        let stackToken: string | undefined = undefined;
+        try {
+          // Try to retrieve an ID token from the Stack SDK; tolerate absence.
+          if (typeof (neonUser as any)?.getIdToken === "function") {
+            stackToken = await (neonUser as any).getIdToken();
+          } else if (typeof (stackClientApp as any)?.getIdToken === "function") {
+            stackToken = await (stackClientApp as any).getIdToken();
+          }
+        } catch (e) {
+          // Non-fatal: proceed without token if verification is disabled server-side
+          console.warn("Could not obtain Stack ID token", e);
+        }
 
-      // Trigger storage event to update other components
-      window.dispatchEvent(new Event("storage"));
+        const { data } = await neonLogin({ variables: { email, name, stackToken } });
 
-      // Redirect to resume-tailor page
-      router.push("/resume-tailor");
-    }
-  }, [neonUser, hasProcessed, setUser, router]);
+        if (data?.neonLogin) {
+          const { accessToken, user } = data.neonLogin;
+
+          if (accessToken) {
+            localStorage.setItem("authToken", accessToken);
+            document.cookie = `authToken=${accessToken}; path=/; max-age=3600;`;
+          }
+
+          if (user) {
+            localStorage.setItem("user", JSON.stringify(user));
+            setUser(user);
+          }
+
+          window.dispatchEvent(new Event("storage"));
+          router.push("/resume-tailor");
+        }
+      } catch (e) {
+        console.error("Neon login failed", e);
+      }
+    };
+
+    run();
+  }, [neonUser, hasProcessed, setUser, router, neonLogin]);
 
   return null; // This component doesn't render anything
 }

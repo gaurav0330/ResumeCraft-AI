@@ -72,3 +72,30 @@ export async function logoutUser(userId) {
   });
   return true;
 }
+
+// Neon/Stack auth: create or find a user by email and issue tokens
+export async function loginOrCreateNeonUser(email, displayName) {
+  let user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    // For OAuth users, set a random password hash since the field is required
+    const randomPassword = crypto.randomBytes(32).toString("hex");
+    const passwordHash = await hashPassword(randomPassword);
+    const username = displayName || email.split("@")[0];
+    user = await prisma.user.create({ data: { username, email, passwordHash } });
+  }
+
+  const accessToken = generateAccessToken(user.id);
+
+  const refreshToken = crypto.randomBytes(48).toString("hex");
+  const refreshTokenHash = hashRefreshToken(refreshToken);
+  const expiresAt = new Date(
+    Date.now() + REFRESH_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+  );
+
+  await prisma.session.create({
+    data: { userId: user.id, refreshTokenHash, expiresAt },
+  });
+
+  return { accessToken, refreshToken, user };
+}
