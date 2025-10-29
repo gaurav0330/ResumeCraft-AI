@@ -176,10 +176,32 @@ export default {
     },
     acceptOptimizedResume: async (_, { resumeId, optimizedLatex }, { prisma, user }) => {
       if (!user) throw new AuthenticationError("Unauthorized");
-      const resume = await prisma.resume.findFirst({ where: { id: parseInt(resumeId), userId: user.id } });
+      const id = parseInt(resumeId);
+      const resume = await prisma.resume.findFirst({ where: { id, userId: user.id } });
       if (!resume) throw new AuthenticationError("Resume not found or not accessible");
-      const updated = await prisma.resume.update({ where: { id: resume.id }, data: { optimizedLatex } });
-      return updated;
+
+      // Persist optimized latex onto main latexCode as well to ensure downstream consistency
+      const updated = await prisma.resume.update({
+        where: { id },
+        data: { latexCode: optimizedLatex },
+      });
+
+      // Rebuild sections from optimizedLatex and overwrite existing ones for this resume
+      try {
+        const sections = extractLatexSections(optimizedLatex || "");
+        await prisma.$transaction(async (tx) => {
+          await tx.resumeSection.deleteMany({ where: { resumeId: id } });
+          if (sections && sections.length > 0) {
+            await tx.resumeSection.createMany({
+              data: sections.map((s) => ({ resumeId: id, sectionName: s.sectionName, content: s.content })),
+            });
+          }
+        });
+      } catch (e) {
+        logger.error(`[acceptOptimizedResume] Section override failed: ${e?.message}`);
+      }
+
+      return prisma.resume.findUnique({ where: { id }, include: { sections: true } });
     },
   },
 };
