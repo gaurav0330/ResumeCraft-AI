@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { StackProvider, StackTheme } from "@stackframe/stack";
+import { stackClientApp } from "../stack/client";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -7,6 +9,7 @@ import ReduxProviderWrapper from "@/components/provider/ReduxProviderWrapper";
 import { AuthProviderWrapper } from "@/components/provider/AuthProviderWrapper";
 import { ThemeProvider } from "@/components/provider/ThemeProvider";
 import AppShell from "@/components/provider/AppShell";
+import NeonAuthHandler from "@/components/auth/NeonAuthHandler";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,9 +31,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable}`}><StackProvider app={stackClientApp}><StackTheme>
         <ThemeProvider>
           <AuthProviderWrapper>
+            <NeonAuthHandler />
             <ApolloProviderWrapper>
               <ReduxProviderWrapper>
                 <AppShell>{children}</AppShell>
@@ -38,7 +42,7 @@ export default function RootLayout({
             </ApolloProviderWrapper>
           </AuthProviderWrapper>
         </ThemeProvider>
-      </body>
+      </StackTheme></StackProvider></body>
     </html>
   );
 }
