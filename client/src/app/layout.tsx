@@ -38,16 +38,18 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${roboto.variable} ${robotoMono.variable}`}><StackProvider app={stackClientApp}><StackTheme>
         <ThemeProvider>
+        <ToastProvider>
           <AuthProviderWrapper>
             <ApolloProviderWrapper>
-              <ToastProvider>
+             
                 <NeonAuthHandler />
                 <ReduxProviderWrapper>
                   <AppShell>{children}</AppShell>
                 </ReduxProviderWrapper>
-              </ToastProvider>
+             
             </ApolloProviderWrapper>
           </AuthProviderWrapper>
+          </ToastProvider>
         </ThemeProvider>
       </StackTheme></StackProvider></body>
     </html>
