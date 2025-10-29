@@ -7,6 +7,8 @@ import { LaTeXPreview } from "@/components/resume-tailor/LaTeXPreview";
 import { ACCEPT_OPTIMIZED_RESUME } from "@/graphql/mutations/resume";
 import { GET_USER_RESUMES_QUERY } from "@/graphql/queries/resume";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
 
 interface ComparePayload {
   originalLatex: string;
@@ -16,6 +18,8 @@ interface ComparePayload {
 }
 
 export default function ComparePage() {
+  const ReactDiffViewer = dynamic(() => import("react-diff-viewer-continued"), { ssr: false });
+  
   const router = useRouter();
   const [payload, setPayload] = useState<ComparePayload | null>(null);
   const [acceptOptimized, { loading: acceptLoading }] = useMutation(ACCEPT_OPTIMIZED_RESUME, {
@@ -67,34 +71,64 @@ export default function ComparePage() {
       </div>
 
       {payload.changes && payload.changes.length > 0 && (
-        <div className="mt-6 rounded-lg border p-4">
-          <h3 className="font-medium mb-3">Changes</h3>
-          <div className="max-h-64 overflow-auto pr-2">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-muted-foreground">
-                  <th className="py-1 pr-3">Section</th>
-                  <th className="py-1 pr-3">Change</th>
-                  <th className="py-1">Note</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payload.changes.map((c, idx) => (
-                  <tr key={idx} className="border-t">
-                    <td className="py-2 pr-3 font-medium">{c.sectionName}</td>
-                    <td className="py-2 pr-3">
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-muted text-foreground/80">
-                        {c.changeType}
-                      </span>
-                    </td>
-                    <td className="py-2 text-muted-foreground">{c.explanation || "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+  <div className="mt-6 rounded-xl border bg-card shadow-sm p-6">
+    <h3 className="text-lg font-semibold mb-4">Detailed Section Changes</h3>
+    <div className="space-y-6">
+      {payload.changes.map((change, idx) => (
+        <div key={idx} className="rounded-lg border p-4 bg-background shadow-sm hover:shadow-md transition">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h4 className="font-medium text-base">{change.sectionName}</h4>
+              <p className="text-sm text-muted-foreground">
+                {change.explanation || (change.changeType === "added"
+                  ? "New section added"
+                  : change.changeType === "removed"
+                  ? "Section removed"
+                  : "No significant change")}
+              </p>
+            </div>
+
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                change.changeType === "modified"
+                  ? "bg-blue-100 text-blue-800"
+                  : change.changeType === "added"
+                  ? "bg-green-100 text-green-800"
+                  : change.changeType === "removed"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-gray-100 text-gray-600"
+              }`}
+            >
+              {change.changeType}
+            </span>
           </div>
+
+          {change.changeType === "modified" && (
+            <div className="mt-3 border-t pt-3 text-sm">
+              <ReactDiffViewer
+                oldValue={change.originalContent || ""}
+                newValue={change.newContent || ""}
+                splitView={true}
+                showDiffOnly={true}
+                leftTitle="Original"
+                rightTitle="Optimized"
+                styles={{
+                  variables: {
+                    light: {
+                      diffViewerBackground: "transparent",
+                      addedBackground: "#e6ffed",
+                      removedBackground: "#ffefef",
+                    },
+                  },
+                }}
+              />
+            </div>
+          )}
         </div>
-      )}
+      ))}
+    </div>
+  </div>
+)}
 
       <div className="mt-6 flex gap-3">
         <Button onClick={handleAccept} disabled={acceptLoading}>Accept & Save</Button>
