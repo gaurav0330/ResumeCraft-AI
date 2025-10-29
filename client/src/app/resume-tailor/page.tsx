@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@apollo/client/react"; // ✅ fixed import
 import { Button } from "@/components/ui/button";
 import { JobDescriptionBox } from "@/components/resume-tailor/JobDescriptionBox";
@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/provider/ProtectedRoute";
 import { useAuth } from "@/components/provider/AuthProviderWrapper";
+import { useToast } from "@/components/provider/ToastProvider";
 
 import {
   UPLOAD_RESUME_MUTATION,
@@ -32,6 +33,7 @@ import type {
 function ResumeTailorContent() {
   const { user } = useAuth();
   const router = useRouter();
+  const { showToast } = useToast();
 
   const [jobDescription, setJobDescription] = useState({ title: "", content: "" });
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -41,16 +43,30 @@ function ResumeTailorContent() {
   const [isResultVisible, setIsResultVisible] = useState(false);
   const [hasExistingData, setHasExistingData] = useState(false);
   const [activeStep, setActiveStep] = useState("step-1");
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizationLogs, setOptimizationLogs] = useState<string[]>([]);
 
   // --- Apollo queries ---
   const { data: jdData, loading: jdLoading } = useQuery<GetUserJobDescriptionsResponse>(
     GET_JOB_DESCRIPTIONS,
-    { variables: { userId: user?.id }, skip: !user }
+    {
+      variables: { userId: user?.id },
+      skip: !user,
+      fetchPolicy: "network-only",
+      nextFetchPolicy: "cache-first",
+      notifyOnNetworkStatusChange: true,
+    }
   );
 
   const { data: resumeData, loading: resumeLoading } = useQuery<GetUserResumesResponse>(
     GET_USER_RESUMES_QUERY,
-    { variables: { userId: user?.id }, skip: !user }
+    {
+      variables: { userId: user?.id },
+      skip: !user,
+      fetchPolicy: "network-only",
+      nextFetchPolicy: "cache-first",
+      notifyOnNetworkStatusChange: true,
+    }
   );
 
   const [createJobDescription] = useMutation(CREATE_JOB_DESCRIPTION_MUTATION);
@@ -63,7 +79,20 @@ function ResumeTailorContent() {
     { refetchQueries: [{ query: GET_USER_RESUMES_QUERY, variables: { userId: user?.id } }] }
   );
 
-  // --- Populate data from DB if exists ---
+  // --- Hydrate from localStorage on first mount ---
+  useEffect(() => {
+    try {
+      const savedJD = localStorage.getItem("rt_jd");
+      if (savedJD) {
+        const parsed = JSON.parse(savedJD) as { title: string; content: string };
+        if (parsed?.title || parsed?.content) setJobDescription({ title: parsed.title || "", content: parsed.content || "" });
+      }
+      const savedLatex = localStorage.getItem("rt_latex");
+      if (savedLatex) setLatexCode(savedLatex);
+    } catch {}
+  }, []);
+
+  // --- Populate from DB and persist to localStorage ---
   useEffect(() => {
     const existingJD = jdData?.getUserJobDescriptions?.[0];
     const existingResume = resumeData?.getUserResumes?.[0];
@@ -71,31 +100,72 @@ function ResumeTailorContent() {
     if (existingJD || existingResume) setHasExistingData(true);
 
     if (existingJD) {
-      setJobDescription({
+      const nextJD = {
         title: existingJD.title || "",
         content: existingJD.content || "",
-      });
+      };
+      setJobDescription(nextJD);
+      try { localStorage.setItem("rt_jd", JSON.stringify(nextJD)); } catch {}
     }
 
     if (existingResume) {
-      setLatexCode(existingResume.latexCode || "");
+      const nextLatex = existingResume.latexCode || "";
+      setLatexCode(nextLatex);
+      try { localStorage.setItem("rt_latex", nextLatex); } catch {}
     }
   }, [jdData, resumeData]);
+
+  // --- Controlled setters that also persist ---
+  const setJobDescriptionPersist = useCallback((jd: { title: string; content: string }) => {
+    setJobDescription(jd);
+    try { localStorage.setItem("rt_jd", JSON.stringify(jd)); } catch {}
+  }, []);
+
+  const setLatexCodePersist = useCallback((val: string) => {
+    setLatexCode(val);
+    try { localStorage.setItem("rt_latex", val); } catch {}
+  }, []);
 
   const existingJD = jdData?.getUserJobDescriptions?.[0];
   const existingResume = resumeData?.getUserResumes?.[0] as Resume | undefined;
 
   const handleOptimizePreview = async () => {
     if (!existingJD?.id || !existingResume?.id) {
-      alert("Need a saved Job Description and Resume first.");
+      showToast({ variant: "warning", title: "Missing data", description: "Save a Job Description and a Resume first." });
       return;
     }
     try {
       setIsLoading(true);
+      setIsOptimizing(true);
+
+      // live step logs like a terminal
+      setOptimizationLogs(["Initializing optimizer..."]);
+      const addLog = (line: string) => setOptimizationLogs((prev) => [...prev, line]);
+      const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+      // Run staged logs in the background while the mutation executes
+      (async () => {
+        await delay(350);
+        addLog("Parsing resume (LaTeX) ✍️");
+        await delay(400);
+        addLog("Extracting sections: Education, Experience, Projects, Skills...");
+        await delay(500);
+        addLog("Reading job description 🧾");
+        await delay(450);
+        addLog("Computing semantic similarity with embeddings 🔎");
+        await delay(600);
+        addLog("Selecting strong bullet points and quantifiable wins ✅");
+        await delay(550);
+        addLog("Generating optimized LaTeX with aligned keywords ✨");
+      })();
+
       const { data } = await optimizePreview({ variables: { resumeId: existingResume.id, jobDescriptionId: existingJD.id } });
       const result = (data as OptimizeResumePreviewResponse | undefined)?.optimizeResumePreview ??
         (previewData as OptimizeResumePreviewResponse | undefined)?.optimizeResumePreview;
       if (result?.optimizedLatex) {
+        showToast({ variant: "success", title: "Preview ready", description: "Optimized preview generated." });
+        addLog("Optimization complete ✔");
+        addLog("Preparing comparison view...");
         const payload = {
           originalLatex: (existingResume?.optimizedLatex || existingResume?.latexCode) ?? "",
           optimizedLatex: result.optimizedLatex,
@@ -107,9 +177,10 @@ function ResumeTailorContent() {
       }
     } catch (e: any) {
       console.error(e);
-      alert(e.message || "Failed to generate preview");
+      showToast({ variant: "destructive", title: "Preview failed", description: e.message || "Failed to generate preview" });
     } finally {
       setIsLoading(false);
+      setIsOptimizing(false);
     }
   };
 
@@ -119,10 +190,10 @@ function ResumeTailorContent() {
     if (!optimizedLatex || !existingResume?.id) return;
     try {
       await acceptOptimized({ variables: { resumeId: existingResume.id, optimizedLatex } });
-      alert("Optimized resume saved.");
+      showToast({ variant: "success", title: "Saved", description: "Optimized resume saved." });
     } catch (e: any) {
       console.error(e);
-      alert(e.message || "Failed to save optimized resume");
+      showToast({ variant: "destructive", title: "Save failed", description: e.message || "Failed to save optimized resume" });
     }
   };
 
@@ -134,12 +205,12 @@ function ResumeTailorContent() {
 
   const handleTailorResume = async () => {
     if (!jobDescription.title || !jobDescription.content) {
-      alert("Please fill out the job title and description.");
+      showToast({ variant: "warning", title: "Missing fields", description: "Please fill the job title and description." });
       return;
     }
 
     if (!resumeFile && !latexCode.trim()) {
-      alert("Please upload a .tex file or paste LaTeX code.");
+      showToast({ variant: "warning", title: "Resume required", description: "Upload a .tex file or paste LaTeX code." });
       return;
     }
 
@@ -173,9 +244,11 @@ function ResumeTailorContent() {
           `📅 ${resume?.createdAt ? new Date(resume.createdAt).toLocaleString() : "Just now"}\n` +
           `${resume?.fileUrl ? "📎 File URL: " + resume.fileUrl : ""}`
       );
+      showToast({ variant: "success", title: "Uploaded", description: "Job and resume saved." });
     } catch (error: any) {
       console.error("Operation failed:", error);
       setTailoredResume(`❌ Operation failed: ${error.message}`);
+      showToast({ variant: "destructive", title: "Failed", description: error.message });
     } finally {
       setIsLoading(false);
     }
@@ -203,7 +276,7 @@ function ResumeTailorContent() {
               </TabsList>
 
               <TabsContent value="step-1" className="mt-4">
-                <JobDescriptionBox value={jobDescription} onChange={setJobDescription} />
+                <JobDescriptionBox value={jobDescription} onChange={setJobDescriptionPersist} />
                 <div className="flex justify-end mt-4">
                   <Button onClick={() => setActiveStep("step-2")}>Continue</Button>
                 </div>
@@ -212,7 +285,7 @@ function ResumeTailorContent() {
               <TabsContent value="step-2" className="mt-4">
                 <ResumeUploadBox
                   onFileSelect={setResumeFile}
-                  onLatexChange={setLatexCode}
+                  onLatexChange={setLatexCodePersist}
                   latexValue={latexCode}
                 />
                 <div className="flex items-center justify-between mt-4">
@@ -229,6 +302,18 @@ function ResumeTailorContent() {
                 <Button onClick={handleTailorResume} disabled={isLoading} className="w-full">
                   {isLoading ? "Processing..." : "Tailor Resume"}
                 </Button>
+
+                {isOptimizing && (
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <div className="text-xs text-muted-foreground mb-2">Optimization log</div>
+                    <div className="font-mono text-sm whitespace-pre-wrap leading-6">
+                      {optimizationLogs.map((line, idx) => (
+                        <div key={idx}>{line}</div>
+                      ))}
+                      <span className="opacity-60">▋</span>
+                    </div>
+                  </div>
+                )}
 
                 {hasExistingData && (
                   <div className="rounded-lg border p-4">
