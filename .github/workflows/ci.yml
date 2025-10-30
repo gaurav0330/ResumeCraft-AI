@@ -45,7 +45,7 @@ jobs:
 
   docker:
     name: Build & Push Docker Images
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/deploy-v1')
     needs: [client, server]
     runs-on: ubuntu-latest
     permissions:
