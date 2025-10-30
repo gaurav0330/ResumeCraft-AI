@@ -5,7 +5,7 @@ on:
     branches: [ deploy-v1 ]
     paths:
       - 'server/**'
-      - '!server/README.md'  # Exclude README changes
+      - '.github/workflows/deploy-server.yml'  # Exclude README changes
   workflow_dispatch:  # Allow manual triggers
 
 permissions:
