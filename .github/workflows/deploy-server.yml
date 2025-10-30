@@ -2,7 +2,7 @@ name: Deploy Server (Render Hook + GHCR)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ deploy-v1 ]
     paths:
       - 'server/**'
   workflow_dispatch:
@@ -34,10 +34,13 @@ jobs:
   trigger_render:
     runs-on: ubuntu-latest
     needs: build_and_push
-    if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
     steps:
       - name: Trigger Render Deploy Hook
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
-
-
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            curl -X POST "$RENDER_DEPLOY_HOOK"
+          else
+            echo "No RENDER_DEPLOY_HOOK secret set, skipping deploy trigger"
+          fi
