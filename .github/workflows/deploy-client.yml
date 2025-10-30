@@ -3,9 +3,6 @@ name: Deploy Client (Vercel)
 on:
   push:
     branches: [ deploy-v1 ]
-    paths:
-      - 'client/**'
-      - '.github/workflows/deploy-client.yml'
   workflow_dispatch:
 
 jobs:

@@ -3,9 +3,6 @@ name: Deploy Server (Render Hook + GHCR)
 on:
   push:
     branches: [ deploy-v1 ]
-    paths:
-      - 'server/**'
-      - '.github/workflows/deploy-server.yml'  # Exclude README changes
   workflow_dispatch:  # Allow manual triggers
 
 permissions:
