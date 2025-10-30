@@ -2,7 +2,7 @@ name: Deploy Client (Vercel)
 
 on:
   push:
-    branches: [ deploy-v1 ]
+    branches: [ main ]
     paths:
       - 'client/**'
   workflow_dispatch:

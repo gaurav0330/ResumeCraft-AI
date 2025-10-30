@@ -2,7 +2,7 @@ name: Deploy Server (Render Hook + GHCR)
 
 on:
   push:
-    branches: [ deploy-v1 ]
+    branches: [ main ]
     paths:
       - 'server/**'
   workflow_dispatch:
