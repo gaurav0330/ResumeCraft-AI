@@ -30,7 +30,6 @@ jobs:
           STACK_SECRET_SERVER_KEY: ${{ secrets.STACK_SECRET_SERVER_KEY }}
         run: npm run build
 
-
   server:
     name: Server Lint
     runs-on: ubuntu-latest
