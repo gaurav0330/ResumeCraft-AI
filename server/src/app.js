@@ -63,7 +63,7 @@ app.use(
 
 // ❤️ Health check endpoint
 app.get("/healthz", (req, res) => res.json({ status: "ok" }));
-app.get("/", (req, res) => res.json({ status: "ready" }));
+app.get("/ready", (req, res) => res.json({ status: "ready" }));
 
 // ❗ Global error handler
 app.use(errorHandler);
