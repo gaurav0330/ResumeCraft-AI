@@ -11,25 +11,33 @@ export async function registerUser(username, email, password) {
 }
 
 export async function loginUser(email, password) {
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) throw new Error("Invalid credentials");
-
-  const valid = await verifyPassword(user.passwordHash, password);
-  if (!valid) throw new Error("Invalid credentials");
-
-  const accessToken = generateAccessToken(user.id);
-
-  const refreshToken = crypto.randomBytes(48).toString("hex");
-  const refreshTokenHash = hashRefreshToken(refreshToken);
-  const expiresAt = new Date(
-    Date.now() + REFRESH_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
-  );
-
-  await prisma.session.create({
-    data: { userId: user.id, refreshTokenHash, expiresAt },
+  const timeout = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error("login timeout")), 10000);
   });
 
-  return { accessToken, refreshToken, user };
+  const loginProcess = (async () => {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) throw new Error("Invalid credentials");
+
+    const valid = await verifyPassword(user.passwordHash, password);
+    if (!valid) throw new Error("Invalid credentials");
+
+    const accessToken = generateAccessToken(user.id);
+
+    const refreshToken = crypto.randomBytes(48).toString("hex");
+    const refreshTokenHash = hashRefreshToken(refreshToken);
+    const expiresAt = new Date(
+      Date.now() + REFRESH_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+    );
+
+    await prisma.session.create({
+      data: { userId: user.id, refreshTokenHash, expiresAt },
+    });
+
+    return { accessToken, refreshToken, user };
+  })();
+
+  return Promise.race([loginProcess, timeout]);
 }
 
 export async function refreshTokens(refreshToken) {
