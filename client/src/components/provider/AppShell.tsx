@@ -14,9 +14,9 @@ export default function AppShell({ children, className }: { children: React.Reac
       <header className="sticky top-0 z-40 w-full border-b bg-background">
         <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-base font-semibold heading-font">ResumeCraft AI</Link>
+            <Link href="/" style={{ color: 'black', textDecoration: 'none' , fontWeight: 'bold'}}>ResumeCraft AI</Link>
             <nav className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
-              <Link href="/resume-tailor" className="hover:text-foreground">Tailor</Link>
+              <Link href="/resume-tailor" style={{ color: 'black', textDecoration: 'none' }}>Tailor</Link>
             </nav>
           </div>
           <div className="flex items-center gap-2">
@@ -39,15 +39,29 @@ export default function AppShell({ children, className }: { children: React.Reac
       <main className="flex-1">
         {children}
       </main>
-      <footer className="border-t text-sm text-muted-foreground">
-        <div className="mx-auto max-w-7xl px-4 h-12 flex items-center justify-between">
-          <span>© {new Date().getFullYear()} ResumeCraft AI</span>
-          <div className="hidden md:flex items-center gap-4">
-            <Link href="#">Privacy</Link>
-            <Link href="#">Terms</Link>
-          </div>
-        </div>
-      </footer>
+     <footer className="border-t text-sm text-muted-foreground">
+  <div className="mx-auto max-w-7xl px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-3">
+    {/* Left side */}
+    <div className="text-center md:text-left">
+      © {new Date().getFullYear()} <span className="font-medium text-foreground">ResumeCraft AI</span>.  
+      Built with ❤️ for smarter resumes.
+    </div>
+
+    {/* Right side */}
+    <div className="flex items-center gap-4">
+      <Link href="#" className="hover:text-foreground transition-colors">
+        Privacy
+      </Link>
+      <Link href="#" className="hover:text-foreground transition-colors">
+        Terms
+      </Link>
+      <Link href="#" className="hover:text-foreground transition-colors">
+        Contact
+      </Link>
+    </div>
+  </div>
+</footer>
+
     </div>
   );
 }
